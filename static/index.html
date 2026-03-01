@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Health Tracker</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <!-- ── Auth Overlay ───────────────────────────────────────── -->
+  <div id="auth-overlay" class="hidden">
+    <div class="auth-box">
+      <h2 id="auth-title">Login</h2>
+      <label>Username <input id="auth-username" autocomplete="username" /></label>
+      <label>Password <input id="auth-password" type="password" autocomplete="current-password" /></label>
+      <button id="auth-submit-btn">Log in</button>
+      <p id="auth-error" class="form-status error"></p>
+      <button id="auth-toggle-btn" class="btn-link">No account? Register</button>
+    </div>
+  </div>
+
+  <!-- ── Header ─────────────────────────────────────────────── -->
+  <header>
+    <h1>Health Tracker</h1>
+    <div class="header-auth">
+      <span id="header-username" class="header-user"></span>
+      <button id="logout-btn" class="btn-link-header">Logout</button>
+    </div>
+    <div class="import-bar">
+      <form id="import-form">
+        <label for="import-file">Samsung Health import:</label>
+        <input type="file" id="import-file" accept=".zip,.csv" />
+        <button type="submit">Import</button>
+      </form>
+      <button id="view-log-btn" type="button">View Log</button>
+      <div id="import-status"></div>
+    </div>
+  </header>
+
+  <!-- ── Tabs ───────────────────────────────────────────────── -->
+  <nav class="tabs" role="tablist">
+    <button class="tab-btn active" data-tab="dashboard"       role="tab">Dashboard</button>
+    <button class="tab-btn"        data-tab="blood-pressure"  role="tab">Blood Pressure</button>
+    <button class="tab-btn"        data-tab="weight"          role="tab">Weight</button>
+<button class="tab-btn"        data-tab="steps"           role="tab">Steps</button>
+  </nav>
+
+  <main>
+
+    <!-- ── Dashboard ──────────────────────────────────────────── -->
+    <section id="tab-dashboard" class="tab-content active">
+      <h2>Dashboard — last 30 days</h2>
+      <div class="dashboard-cards">
+        <div class="card">
+          <h3>Blood Pressure</h3>
+          <p id="dash-bp-latest" class="latest-value">—</p>
+          <p id="dash-bp-avg7" class="avg-value">Avg (last 7): —</p>
+          <canvas id="dash-bp-chart"></canvas>
+        </div>
+        <div class="card">
+          <h3>Weight</h3>
+          <p id="dash-weight-latest" class="latest-value">—</p>
+          <p id="dash-weight-avg7" class="avg-value">Avg (last 7): —</p>
+          <canvas id="dash-weight-chart"></canvas>
+        </div>
+        <div class="card">
+          <h3>Steps</h3>
+          <p id="dash-steps-latest" class="latest-value">—</p>
+          <p id="dash-steps-avg7" class="avg-value">Avg (last 7): —</p>
+          <canvas id="dash-steps-chart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Blood Pressure ─────────────────────────────────────── -->
+    <section id="tab-blood-pressure" class="tab-content">
+      <h2>Blood Pressure</h2>
+      <div class="tab-layout">
+        <div class="chart-area">
+          <canvas id="bp-chart"></canvas>
+        </div>
+        <aside class="sidebar">
+          <h3>New Entry</h3>
+          <form id="bp-form" class="entry-form">
+            <label>Date &amp; Time
+              <input type="datetime-local" name="measured_at" required />
+            </label>
+            <label>Systolic (mmHg)
+              <input type="number" name="systolic" min="50" max="300" required />
+            </label>
+            <label>Diastolic (mmHg)
+              <input type="number" name="diastolic" min="30" max="200" required />
+            </label>
+            <label>Pulse (bpm)
+              <input type="number" name="pulse" min="20" max="250" />
+            </label>
+            <label>Notes
+              <textarea name="notes" rows="2"></textarea>
+            </label>
+            <button type="submit">Save</button>
+          </form>
+          <div id="bp-form-status" class="form-status"></div>
+        </aside>
+      </div>
+      <div class="table-area">
+        <table id="bp-table">
+          <thead>
+            <tr>
+              <th>Date</th><th>Sys</th><th>Dia</th><th>Pulse</th><th>Notes</th><th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── Weight ─────────────────────────────────────────────── -->
+    <section id="tab-weight" class="tab-content">
+      <h2>Weight</h2>
+      <div class="tab-layout">
+        <div class="chart-area">
+          <canvas id="weight-chart"></canvas>
+        </div>
+        <aside class="sidebar">
+          <h3>New Entry</h3>
+          <form id="weight-form" class="entry-form">
+            <label>Date &amp; Time
+              <input type="datetime-local" name="measured_at" required />
+            </label>
+            <label>Weight (kg)
+              <input type="number" name="value_kg" step="0.1" min="20" max="500" required />
+            </label>
+            <label>Notes
+              <textarea name="notes" rows="2"></textarea>
+            </label>
+            <button type="submit">Save</button>
+          </form>
+          <div id="weight-form-status" class="form-status"></div>
+          <h3 style="margin-top:1rem;">Goal</h3>
+          <div class="entry-form">
+            <label>Target (kg)
+              <input type="number" id="weight-goal-input" step="0.1" min="20" max="500" placeholder="e.g. 75.0" />
+            </label>
+            <button type="button" id="weight-goal-save">Set Goal</button>
+            <div id="weight-goal-status" class="form-status"></div>
+          </div>
+        </aside>
+      </div>
+      <div class="table-area">
+        <table id="weight-table">
+          <thead>
+            <tr><th>Date</th><th>Weight (kg)</th><th>Notes</th><th></th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+<!-- ── Steps ──────────────────────────────────────────────── -->
+    <section id="tab-steps" class="tab-content">
+      <h2>Steps</h2>
+      <div class="tab-layout">
+        <div class="chart-area">
+          <canvas id="steps-chart"></canvas>
+          <canvas id="distance-chart" style="margin-top: 1.5rem;"></canvas>
+        </div>
+        <aside class="sidebar">
+          <h3>New Entry</h3>
+          <form id="steps-form" class="entry-form">
+            <label>Date
+              <input type="date" name="step_date" required />
+            </label>
+            <label>Step Count
+              <input type="number" name="step_count" min="0" required />
+            </label>
+            <label>Distance (km)
+              <input type="number" name="distance_km" step="0.01" min="0" />
+            </label>
+            <button type="submit">Save</button>
+          </form>
+          <div id="steps-form-status" class="form-status"></div>
+        </aside>
+      </div>
+      <div class="table-area">
+        <table id="steps-table">
+          <thead>
+            <tr><th>Date</th><th>Steps</th><th>Distance</th><th></th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ── Import Results Modal ───────────────────────────────── -->
+  <div id="import-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2 id="modal-title">Import Results</h2>
+        <button id="modal-close" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body" id="modal-body">
+        <!-- populated by import.js -->
+      </div>
+      <div class="modal-footer">
+        <button id="modal-view-log" class="btn-secondary">View Log</button>
+        <button id="modal-close-btn">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart.js + date adapter + annotation plugin -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+
+  <script src="/js/auth.js"></script>
+  <script src="/js/app.js"></script>
+  <script src="/js/charts.js"></script>
+  <script src="/js/forms.js"></script>
+  <script src="/js/import.js"></script>
+</body>
+</html>

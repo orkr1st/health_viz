@@ -1,0 +1,3 @@
+﻿com.samsung.shealth.step_daily_trend,6311013,6,,,,,,,,,,
+binning_data,update_time,create_time,source_pkg_name,source_type,count,speed,distance,calorie,deviceuuid,pkg_name,datauuid,day_time
+05889663-bbcc-4420-a30b-9749cc1a5444.binning_data.json,2025-05-10 11:58:09.564,2025-05-10 11:58:09.564,com.sec.android.app.shealth,0,7625,3.744751,5601.9736,259.80942,Fo+eCQUifR,com.sec.android.app.shealth,05889663-bbcc-4420-a30b-9749cc1a5444,1480723200000

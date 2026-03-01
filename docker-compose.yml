@@ -1,0 +1,11 @@
+services:
+  health:
+    build: .
+    ports:
+      - "8443:8443"
+    volumes:
+      - ./health.db:/app/health.db
+      - ./logs:/app/logs
+    environment:
+      - SECRET_KEY=change-me-in-production
+    restart: unless-stopped

@@ -1,0 +1,33 @@
+# Personal health data — NEVER commit
+health.db
+temp/
+
+# Application logs
+logs/
+
+# Python cache
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+
+# Test / coverage artefacts
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environment / secrets
+.env
+.env.*
+
+# Claude Code local state
+.claude/
+claude_resume.txt
+
+# Editor / OS
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
