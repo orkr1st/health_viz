@@ -69,6 +69,13 @@ header h1 { font-size: 1.25rem; font-weight: 700; white-space: nowrap; }
   max-width: 220px;
 }
 
+.import-file-name {
+  font-size: 0.75rem;
+  color: var(--muted);
+  word-break: break-all;
+  font-style: italic;
+}
+
 .settings-avatar-row {
   display: flex;
   align-items: center;

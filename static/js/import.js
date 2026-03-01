@@ -70,6 +70,14 @@ function buildResultsHtml(results) {
     ${accordions}`;
 }
 
+// ── File selection display ────────────────────────────────────
+document.getElementById('import-file').addEventListener('change', (e) => {
+  const name = e.target.files[0]?.name ?? '';
+  document.getElementById('import-file-name').textContent = name || 'No file selected';
+  // Re-show the dropdown in case the OS file dialog closed it
+  document.getElementById('settings-dropdown').classList.remove('hidden');
+});
+
 // ── Form submit ───────────────────────────────────────────────
 document.getElementById('import-form').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -120,6 +128,7 @@ document.getElementById('import-form').addEventListener('submit', async (e) => {
     }
 
     fileInput.value = '';
+    document.getElementById('import-file-name').textContent = 'No file selected';
   } catch (err) {
     statusEl.textContent = 'Import failed: ' + err.message;
     statusEl.className   = 'error';
