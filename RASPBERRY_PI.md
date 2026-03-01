@@ -24,11 +24,10 @@ rsync -av --exclude='health.db' --exclude='logs/' --exclude='__pycache__' \
 
 ## Configure
 
-On the Pi, edit `docker-compose.yml` and set a real secret key:
+On the Pi, create a `.env` file and set a real secret key:
 
-```yaml
-environment:
-  - SECRET_KEY=your-secret-here
+```bash
+echo "SECRET_KEY=your-secret-here" > ~/health/.env
 ```
 
 ## Start
