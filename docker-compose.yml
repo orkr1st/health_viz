@@ -6,6 +6,7 @@ services:
     volumes:
       - ./health.db:/app/health.db
       - ./logs:/app/logs
+      - ./avatars:/app/static/avatars
     env_file:
       - .env
     restart: unless-stopped
