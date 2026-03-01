@@ -244,7 +244,7 @@ function buildDistanceChart(records) {
 }
 
 // ── Auto-load dashboard on first paint ────────────────────────
-loadDashboard().catch(console.error);
+window.addEventListener('authReady', () => loadDashboard().catch(console.error));
 
 // ── Tab change listener ───────────────────────────────────────
 window.addEventListener('tabchange', async (e) => {

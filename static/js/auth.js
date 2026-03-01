@@ -20,8 +20,19 @@ function hideOverlay() { overlay.classList.add('hidden'); }
 function setAuthError(msg) { authError.textContent = msg; }
 function clearAuthError()  { authError.textContent = ''; }
 
-function setHeaderUser(username) {
+function setHeaderUser(username, avatarUrl) {
   headerUser.textContent = username;
+  const img = document.getElementById('header-avatar');
+  const placeholder = document.getElementById('header-avatar-placeholder');
+  if (avatarUrl) {
+    img.src = avatarUrl + '?v=' + Date.now();
+    img.classList.remove('hidden');
+    placeholder.style.display = 'none';
+  } else {
+    img.classList.add('hidden');
+    placeholder.style.display = '';
+    placeholder.textContent = username.charAt(0).toUpperCase();
+  }
 }
 
 // ── Mode toggle ───────────────────────────────────────────────
@@ -71,8 +82,13 @@ submitBtn.addEventListener('click', async () => {
     }
     const { access_token } = await tokenRes.json();
     setToken(access_token);
-    setHeaderUser(username);
+    const meRes = await fetch('/api/auth/me', {
+      headers: { Authorization: `Bearer ${access_token}` },
+    });
+    const meUser = meRes.ok ? await meRes.json() : { username, avatar_url: null };
+    setHeaderUser(meUser.username, meUser.avatar_url);
     hideOverlay();
+    window.dispatchEvent(new CustomEvent('authReady'));
   } catch (err) {
     setAuthError('Network error. Please try again.');
   }
@@ -110,12 +126,37 @@ logoutBtn.addEventListener('click', logout);
       return;
     }
     const user = await res.json();
-    setHeaderUser(user.username);
+    setHeaderUser(user.username, user.avatar_url);
     hideOverlay();
+    window.dispatchEvent(new CustomEvent('authReady'));
   } catch {
     showOverlay();
   }
 })();
+
+// ── Avatar upload ─────────────────────────────────────────────
+['header-avatar', 'header-avatar-placeholder', 'change-avatar-btn'].forEach(id => {
+  document.getElementById(id).addEventListener('click', () =>
+    document.getElementById('avatar-file-input').click()
+  );
+});
+
+document.getElementById('avatar-file-input').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const fd = new FormData();
+  fd.append('file', file);
+  const res = await fetch('/api/auth/avatar', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${getToken()}` },
+    body: fd,
+  });
+  if (res.ok) {
+    const user = await res.json();
+    setHeaderUser(user.username, user.avatar_url);
+  }
+  e.target.value = '';
+});
 
 // Expose logout globally
 window.logout = logout;

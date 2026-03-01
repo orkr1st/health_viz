@@ -2,19 +2,34 @@
 const tabBtns    = document.querySelectorAll('.tab-btn');
 const tabPanels  = document.querySelectorAll('.tab-content');
 
-function showTab(name) {
+function showTab(name, fireEvent = true) {
   tabBtns.forEach(b => b.classList.toggle('active', b.dataset.tab === name));
   tabPanels.forEach(p => {
     const active = p.id === `tab-${name}`;
     p.classList.toggle('active', active);
   });
   // Trigger chart/data refresh for the newly shown tab
-  window.dispatchEvent(new CustomEvent('tabchange', { detail: name }));
+  if (fireEvent) window.dispatchEvent(new CustomEvent('tabchange', { detail: name }));
 }
 
 tabBtns.forEach(btn => btn.addEventListener('click', () => showTab(btn.dataset.tab)));
 
+document.querySelector('.dashboard-cards').addEventListener('click', e => {
+  const card = e.target.closest('[data-nav-tab]');
+  if (card) showTab(card.dataset.navTab);
+});
+
+// ── Settings dropdown ─────────────────────────────────────────
+const settingsBtn      = document.getElementById('settings-btn');
+const settingsDropdown = document.getElementById('settings-dropdown');
+settingsBtn.addEventListener('click', e => {
+  e.stopPropagation();
+  settingsDropdown.classList.toggle('hidden');
+});
+document.addEventListener('click', () => settingsDropdown.classList.add('hidden'));
+
 // ── Shared API helpers ────────────────────────────────────────
+let _reloading = false;
 async function apiFetch(path, options = {}) {
   const token = getToken();
   const res = await fetch(path, {
@@ -26,8 +41,11 @@ async function apiFetch(path, options = {}) {
     ...options,
   });
   if (res.status === 401) {
-    clearToken();
-    location.reload();
+    if (!_reloading) {
+      _reloading = true;
+      clearToken();
+      location.reload();
+    }
     return;
   }
   if (!res.ok) {
@@ -84,5 +102,5 @@ Object.assign(window, {
   fmtDatetime, fmtDate, setStatus, last30Days, last7Days, avg,
 });
 
-// Show dashboard on load
-showTab('dashboard');
+// Show dashboard on load (no tabchange — authReady handles initial data load)
+showTab('dashboard', false);

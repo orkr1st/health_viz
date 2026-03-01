@@ -1,3 +1,7 @@
+from dotenv import load_dotenv
+load_dotenv()
+
+import os
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
@@ -38,6 +42,13 @@ with engine.connect() as conn:
         conn.execute(text("ALTER TABLE steps ADD COLUMN distance_m REAL"))
         conn.commit()
 
+    # ── avatar_url column on user ────────────────────────────────────────────────
+    try:
+        conn.execute(text("ALTER TABLE \"user\" ADD COLUMN avatar_url VARCHAR(500)"))
+        conn.commit()
+    except Exception:
+        pass
+
     # ── Drop old single-column unique indices (conflict with user-scoped ones) ──
     for idx_name in ("uq_bp_measured_at", "uq_weight_measured_at", "uq_steps_step_date"):
         try:
@@ -60,6 +71,8 @@ with engine.connect() as conn:
         "ON steps(user_id, step_date)"
     ))
     conn.commit()
+
+os.makedirs("static/avatars", exist_ok=True)
 
 app = FastAPI(title="Health Tracker", version="1.0.0")
 
