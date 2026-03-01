@@ -26,6 +26,7 @@ settingsBtn.addEventListener('click', e => {
   e.stopPropagation();
   settingsDropdown.classList.toggle('hidden');
 });
+settingsDropdown.addEventListener('click', e => e.stopPropagation());
 document.addEventListener('click', () => settingsDropdown.classList.add('hidden'));
 
 // ── Shared API helpers ────────────────────────────────────────

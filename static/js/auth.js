@@ -9,8 +9,10 @@ const authTitle    = document.getElementById('auth-title');
 const authError    = document.getElementById('auth-error');
 const submitBtn    = document.getElementById('auth-submit-btn');
 const toggleBtn    = document.getElementById('auth-toggle-btn');
-const headerUser   = document.getElementById('header-username');
-const logoutBtn    = document.getElementById('logout-btn');
+const headerUser        = document.getElementById('header-username');
+const logoutBtn         = document.getElementById('logout-btn');
+const authConfirmWrap   = document.getElementById('auth-confirm-wrap');
+const authPasswordConfirm = document.getElementById('auth-password-confirm');
 
 let isRegisterMode = false;
 
@@ -41,6 +43,8 @@ toggleBtn.addEventListener('click', () => {
   authTitle.textContent   = isRegisterMode ? 'Register' : 'Login';
   submitBtn.textContent   = isRegisterMode ? 'Create account' : 'Log in';
   toggleBtn.textContent   = isRegisterMode ? 'Already have an account? Log in' : 'No account? Register';
+  authConfirmWrap.style.display = isRegisterMode ? '' : 'none';
+  authPasswordConfirm.value = '';
   clearAuthError();
 });
 
@@ -52,6 +56,11 @@ submitBtn.addEventListener('click', async () => {
 
   if (!username || !password) {
     setAuthError('Username and password are required.');
+    return;
+  }
+
+  if (isRegisterMode && password !== authPasswordConfirm.value) {
+    setAuthError('Passwords do not match.');
     return;
   }
 
@@ -96,6 +105,9 @@ submitBtn.addEventListener('click', async () => {
 
 // Allow Enter key to submit
 document.getElementById('auth-password').addEventListener('keydown', e => {
+  if (e.key === 'Enter') submitBtn.click();
+});
+authPasswordConfirm.addEventListener('keydown', e => {
   if (e.key === 'Enter') submitBtn.click();
 });
 document.getElementById('auth-username').addEventListener('keydown', e => {
