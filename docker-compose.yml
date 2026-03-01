@@ -6,6 +6,6 @@ services:
     volumes:
       - ./health.db:/app/health.db
       - ./logs:/app/logs
-    environment:
-      - SECRET_KEY=change-me-in-production
+    env_file:
+      - .env
     restart: unless-stopped
