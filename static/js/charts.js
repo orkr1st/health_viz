@@ -104,14 +104,20 @@ let bpChart = null;
 
 function buildBpChart(records) {
   const sorted = [...records].reverse();
+  const sysValues = sorted.map(r => r.systolic);
+  const diaValues = sorted.map(r => r.diastolic);
+  const avgSys7 = rollingAvg(sysValues, 7);
+  const avgDia7 = rollingAvg(diaValues, 7);
   if (bpChart) { bpChart.destroy(); }
   bpChart = new Chart(document.getElementById('bp-chart'), {
     type: 'line',
     data: {
       datasets: [
-        { label: 'Systolic',  data: sorted.map(r => ({ x: r.measured_at, y: r.systolic })),  borderColor: '#ef4444', backgroundColor: '#ef444422', fill: false, stepped: 'middle', tension: 0, pointRadius: 3 },
-        { label: 'Diastolic', data: sorted.map(r => ({ x: r.measured_at, y: r.diastolic })), borderColor: '#3b82f6', backgroundColor: '#3b82f622', fill: false, stepped: 'middle', tension: 0, pointRadius: 3 },
-        { label: 'Pulse',     data: sorted.filter(r => r.pulse).map(r => ({ x: r.measured_at, y: r.pulse })), borderColor: '#16a34a', fill: false, stepped: 'middle', tension: 0, borderDash: [4, 4], pointRadius: 3 },
+        { label: 'Systolic',       data: sorted.map(r => ({ x: r.measured_at, y: r.systolic })),  borderColor: '#ef4444', backgroundColor: '#ef444422', fill: false, stepped: 'middle', tension: 0, pointRadius: 3 },
+        { label: 'Diastolic',      data: sorted.map(r => ({ x: r.measured_at, y: r.diastolic })), borderColor: '#3b82f6', backgroundColor: '#3b82f622', fill: false, stepped: 'middle', tension: 0, pointRadius: 3 },
+        { label: 'Pulse',          data: sorted.filter(r => r.pulse).map(r => ({ x: r.measured_at, y: r.pulse })), borderColor: '#16a34a', fill: false, stepped: 'middle', tension: 0, borderDash: [4, 4], pointRadius: 3 },
+        { label: 'Sys 7-day avg',  data: sorted.map((r, i) => ({ x: r.measured_at, y: +avgSys7[i].toFixed(1) })), borderColor: '#f97316', borderDash: [6, 3], fill: false, tension: 0.3, pointRadius: 0 },
+        { label: 'Dia 7-day avg',  data: sorted.map((r, i) => ({ x: r.measured_at, y: +avgDia7[i].toFixed(1) })), borderColor: '#818cf8', borderDash: [6, 3], fill: false, tension: 0.3, pointRadius: 0 },
       ],
     },
     options: {

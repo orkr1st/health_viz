@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Health Tracker</title>
-  <link rel="stylesheet" href="/css/style.css?v=9" />
+  <link rel="stylesheet" href="/css/style.css?v=10" />
 </head>
 <body>
   <!-- ── Auth Overlay ───────────────────────────────────────── -->
@@ -144,6 +144,19 @@
             <button type="submit">Save</button>
           </form>
           <div id="bp-form-status" class="form-status"></div>
+          <h3 style="margin-top:1rem;">Last 7 readings</h3>
+          <div class="bp-avg-block">
+            <div class="bp-avg-row">
+              <span class="bp-avg-label" style="color:#ef4444">Systolic</span>
+              <span id="bp-avg-sys7" class="bp-avg-value">—</span>
+              <span class="bp-avg-unit">mmHg</span>
+            </div>
+            <div class="bp-avg-row">
+              <span class="bp-avg-label" style="color:#3b82f6">Diastolic</span>
+              <span id="bp-avg-dia7" class="bp-avg-value">—</span>
+              <span class="bp-avg-unit">mmHg</span>
+            </div>
+          </div>
         </aside>
       </div>
       <div class="table-area">
@@ -350,10 +363,10 @@
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
 
-  <script src="/js/auth.js?v=9"></script>
-  <script src="/js/app.js?v=9"></script>
-  <script src="/js/charts.js?v=9"></script>
-  <script src="/js/forms.js?v=9"></script>
-  <script src="/js/import.js?v=9"></script>
+  <script src="/js/auth.js?v=10"></script>
+  <script src="/js/app.js?v=10"></script>
+  <script src="/js/charts.js?v=10"></script>
+  <script src="/js/forms.js?v=10"></script>
+  <script src="/js/import.js?v=10"></script>
 </body>
 </html>

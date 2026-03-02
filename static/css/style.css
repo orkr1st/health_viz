@@ -132,6 +132,13 @@ header h1 { font-size: 1.25rem; font-weight: 700; white-space: nowrap; }
 /* ── Content ────────────────────────────────────────────────── */
 main { padding: 1.5rem; max-width: 1400px; margin: 0 auto; }
 
+/* ── BP 7-day average sidebar block ─────────────────────────── */
+.bp-avg-block { display: flex; flex-direction: column; gap: 0.3rem; margin-top: 0.4rem; }
+.bp-avg-row   { display: flex; align-items: baseline; gap: 0.4rem; font-size: 0.875rem; }
+.bp-avg-label { width: 5.5rem; font-size: 0.78rem; color: var(--muted); }
+.bp-avg-value { font-weight: 700; font-size: 1.1rem; }
+.bp-avg-unit  { font-size: 0.75rem; color: var(--muted); }
+
 /* ── Range selector ─────────────────────────────────────────── */
 .range-bar { display: flex; gap: 0.35rem; margin-bottom: 1rem; }
 .range-btn {
