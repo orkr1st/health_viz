@@ -315,3 +315,148 @@ class TestImport:
         resp = client.get("/api/import/log", headers=auth)
         assert resp.status_code == 200
         assert isinstance(resp.text, str)
+
+
+# ── Change password ────────────────────────────────────────────────────────────
+
+class TestChangePassword:
+    def test_success(self, client, auth):
+        resp = client.post(
+            "/api/auth/change-password",
+            json={"current_password": "secret", "new_password": "newpass"},
+            headers=auth,
+        )
+        assert resp.status_code == 200
+        # Old password no longer works
+        assert client.post(
+            "/api/auth/token", data={"username": "tester", "password": "secret"}
+        ).status_code == 401
+        # New password works
+        assert client.post(
+            "/api/auth/token", data={"username": "tester", "password": "newpass"}
+        ).status_code == 200
+
+    def test_wrong_current_password(self, client, auth):
+        resp = client.post(
+            "/api/auth/change-password",
+            json={"current_password": "wrongpass", "new_password": "newpass"},
+            headers=auth,
+        )
+        assert resp.status_code == 400
+
+    def test_empty_new_password(self, client, auth):
+        resp = client.post(
+            "/api/auth/change-password",
+            json={"current_password": "secret", "new_password": ""},
+            headers=auth,
+        )
+        assert resp.status_code == 400
+
+    def test_requires_auth(self, client):
+        resp = client.post(
+            "/api/auth/change-password",
+            json={"current_password": "secret", "new_password": "newpass"},
+        )
+        assert resp.status_code == 401
+
+
+# ── Deduplicate ────────────────────────────────────────────────────────────────
+
+class TestDeduplicate:
+    def _bp(self, client, auth, timestamp, systolic=120, diastolic=80, pulse=70):
+        return client.post(
+            "/api/blood-pressure",
+            json={"systolic": systolic, "diastolic": diastolic, "pulse": pulse,
+                  "measured_at": timestamp},
+            headers=auth,
+        )
+
+    def _weight(self, client, auth, timestamp, value_kg=75.5):
+        return client.post(
+            "/api/weight",
+            json={"value_kg": value_kg, "measured_at": timestamp},
+            headers=auth,
+        )
+
+    # ── preview (GET) ──────────────────────────────────────────────────────────
+
+    def test_preview_empty(self, client, auth):
+        resp = client.get("/api/deduplicate", headers=auth)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["blood_pressure"] == []
+        assert data["weight"] == []
+        assert data["steps"] == []
+
+    def test_preview_finds_bp_duplicates(self, client, auth):
+        # Same day, same values, different timestamps → duplicate
+        self._bp(client, auth, "2024-01-01T10:00:00")
+        self._bp(client, auth, "2024-01-01T11:00:00")
+        data = client.get("/api/deduplicate", headers=auth).json()
+        assert len(data["blood_pressure"]) == 1
+
+    def test_preview_does_not_delete(self, client, auth):
+        self._bp(client, auth, "2024-01-01T10:00:00")
+        self._bp(client, auth, "2024-01-01T11:00:00")
+        client.get("/api/deduplicate", headers=auth)
+        # Both records still present after preview
+        assert len(client.get("/api/blood-pressure", headers=auth).json()) == 2
+
+    # ── remove (POST) ──────────────────────────────────────────────────────────
+
+    def test_remove_no_dupes_returns_zeros(self, client, auth):
+        self._bp(client, auth, "2024-01-01T10:00:00")
+        data = client.post("/api/deduplicate", headers=auth).json()
+        assert data == {"blood_pressure": 0, "weight": 0, "steps": 0}
+
+    def test_remove_bp_duplicates(self, client, auth):
+        self._bp(client, auth, "2024-01-01T10:00:00")
+        self._bp(client, auth, "2024-01-01T11:00:00")  # duplicate
+        data = client.post("/api/deduplicate", headers=auth).json()
+        assert data["blood_pressure"] == 1
+        assert len(client.get("/api/blood-pressure", headers=auth).json()) == 1
+
+    def test_remove_keeps_earliest_record(self, client, auth):
+        first_id = self._bp(client, auth, "2024-01-01T10:00:00").json()["id"]
+        self._bp(client, auth, "2024-01-01T11:00:00")
+        client.post("/api/deduplicate", headers=auth)
+        remaining = client.get("/api/blood-pressure", headers=auth).json()
+        assert remaining[0]["id"] == first_id
+
+    def test_different_values_on_same_day_not_duplicates(self, client, auth):
+        self._bp(client, auth, "2024-01-01T10:00:00", systolic=120, diastolic=80)
+        self._bp(client, auth, "2024-01-01T11:00:00", systolic=130, diastolic=85)
+        data = client.post("/api/deduplicate", headers=auth).json()
+        assert data["blood_pressure"] == 0
+        assert len(client.get("/api/blood-pressure", headers=auth).json()) == 2
+
+    def test_same_values_different_days_not_duplicates(self, client, auth):
+        self._bp(client, auth, "2024-01-01T10:00:00")
+        self._bp(client, auth, "2024-01-02T10:00:00")
+        data = client.post("/api/deduplicate", headers=auth).json()
+        assert data["blood_pressure"] == 0
+
+    def test_remove_weight_duplicates(self, client, auth):
+        self._weight(client, auth, "2024-01-01T08:00:00")
+        self._weight(client, auth, "2024-01-01T09:00:00")  # duplicate
+        data = client.post("/api/deduplicate", headers=auth).json()
+        assert data["weight"] == 1
+        assert len(client.get("/api/weight", headers=auth).json()) == 1
+
+    def test_user_isolation(self, client, auth):
+        # Tester has a duplicate
+        self._bp(client, auth, "2024-01-01T10:00:00")
+        self._bp(client, auth, "2024-01-01T11:00:00")
+        # Second user has a clean record
+        client.post("/api/auth/register", json={"username": "other_dedup", "password": "pw"})
+        r2 = client.post("/api/auth/token", data={"username": "other_dedup", "password": "pw"})
+        other_auth = {"Authorization": f"Bearer {r2.json()['access_token']}"}
+        self._bp(client, other_auth, "2024-01-01T10:00:00")
+        # Deduplicate as tester
+        assert client.post("/api/deduplicate", headers=auth).json()["blood_pressure"] == 1
+        # Other user's record is untouched
+        assert len(client.get("/api/blood-pressure", headers=other_auth).json()) == 1
+
+    def test_requires_auth(self, client):
+        assert client.get("/api/deduplicate").status_code == 401
+        assert client.post("/api/deduplicate").status_code == 401
