@@ -460,3 +460,123 @@ class TestDeduplicate:
     def test_requires_auth(self, client):
         assert client.get("/api/deduplicate").status_code == 401
         assert client.post("/api/deduplicate").status_code == 401
+
+
+# ── Generic CSV import ─────────────────────────────────────────────────────────
+
+class TestGenericCsvImport:
+    def _upload(self, client, auth, filename, content):
+        return client.post(
+            "/api/import",
+            files={"file": (filename, content, "text/csv")},
+            headers=auth,
+        )
+
+    # ── blood pressure ─────────────────────────────────────────────────────────
+
+    def test_bp_insert(self, client, auth):
+        csv = b"measured_at,systolic,diastolic,pulse,notes\n2024-01-01 10:00:00,120,80,70,rest\n"
+        resp = self._upload(client, auth, "bp.csv", csv)
+        assert resp.status_code == 200
+        result = resp.json()[0]
+        assert result["metric"] == "blood_pressure"
+        assert result["inserted"] == 1
+        assert result["skipped"] == 0
+
+    def test_bp_values_stored_correctly(self, client, auth):
+        csv = b"measured_at,systolic,diastolic,pulse,notes\n2024-01-01 10:00:00,120,80,70,rest\n"
+        self._upload(client, auth, "bp.csv", csv)
+        records = client.get("/api/blood-pressure", headers=auth).json()
+        assert len(records) == 1
+        assert records[0]["systolic"] == 120
+        assert records[0]["diastolic"] == 80
+        assert records[0]["pulse"] == 70
+        assert records[0]["notes"] == "rest"
+
+    def test_bp_idempotent(self, client, auth):
+        csv = b"measured_at,systolic,diastolic,pulse,notes\n2024-01-01 10:00:00,120,80,70,\n"
+        self._upload(client, auth, "bp.csv", csv)
+        resp = self._upload(client, auth, "bp.csv", csv)
+        result = resp.json()[0]
+        assert result["inserted"] == 0
+        assert result["skipped"] == 1
+
+    def test_bp_optional_columns(self, client, auth):
+        # pulse and notes are optional
+        csv = b"measured_at,systolic,diastolic\n2024-01-01 10:00:00,120,80\n"
+        resp = self._upload(client, auth, "bp.csv", csv)
+        assert resp.json()[0]["inserted"] == 1
+        record = client.get("/api/blood-pressure", headers=auth).json()[0]
+        assert record["pulse"] is None
+        assert record["notes"] is None
+
+    # ── weight ─────────────────────────────────────────────────────────────────
+
+    def test_weight_insert(self, client, auth):
+        csv = b"measured_at,value_kg,notes\n2024-01-01 08:00:00,75.5,morning\n"
+        resp = self._upload(client, auth, "weight.csv", csv)
+        result = resp.json()[0]
+        assert result["metric"] == "weight"
+        assert result["inserted"] == 1
+
+    def test_weight_values_stored_correctly(self, client, auth):
+        csv = b"measured_at,value_kg,notes\n2024-01-01 08:00:00,75.5,morning\n"
+        self._upload(client, auth, "weight.csv", csv)
+        records = client.get("/api/weight", headers=auth).json()
+        assert records[0]["value_kg"] == pytest.approx(75.5)
+        assert records[0]["notes"] == "morning"
+
+    def test_weight_idempotent(self, client, auth):
+        csv = b"measured_at,value_kg\n2024-01-01 08:00:00,75.5\n"
+        self._upload(client, auth, "weight.csv", csv)
+        resp = self._upload(client, auth, "weight.csv", csv)
+        result = resp.json()[0]
+        assert result["inserted"] == 0
+        assert result["skipped"] == 1
+
+    # ── steps ──────────────────────────────────────────────────────────────────
+
+    def test_steps_insert(self, client, auth):
+        csv = b"step_date,step_count,distance_m\n2024-01-01,8000,6000.0\n"
+        resp = self._upload(client, auth, "steps.csv", csv)
+        result = resp.json()[0]
+        assert result["metric"] == "steps"
+        assert result["inserted"] == 1
+
+    def test_steps_values_stored_correctly(self, client, auth):
+        csv = b"step_date,step_count,distance_m\n2024-01-01,8000,6000.0\n"
+        self._upload(client, auth, "steps.csv", csv)
+        records = client.get("/api/steps", headers=auth).json()
+        assert records[0]["step_count"] == 8000
+        assert records[0]["distance_m"] == pytest.approx(6000.0)
+
+    def test_steps_idempotent(self, client, auth):
+        csv = b"step_date,step_count\n2024-01-01,8000\n"
+        self._upload(client, auth, "steps.csv", csv)
+        resp = self._upload(client, auth, "steps.csv", csv)
+        result = resp.json()[0]
+        assert result["inserted"] == 0
+        assert result["skipped"] == 1
+
+    def test_steps_optional_distance(self, client, auth):
+        csv = b"step_date,step_count\n2024-01-01,8000\n"
+        resp = self._upload(client, auth, "steps.csv", csv)
+        assert resp.json()[0]["inserted"] == 1
+        assert client.get("/api/steps", headers=auth).json()[0]["distance_m"] is None
+
+    # ── error cases ────────────────────────────────────────────────────────────
+
+    def test_unrecognised_columns_returns_400(self, client, auth):
+        csv = b"foo,bar\n1,2\n"
+        resp = self._upload(client, auth, "unknown.csv", csv)
+        assert resp.status_code == 400
+
+    def test_multiple_rows(self, client, auth):
+        csv = (
+            b"measured_at,systolic,diastolic\n"
+            b"2024-01-01 10:00:00,120,80\n"
+            b"2024-01-02 10:00:00,125,82\n"
+        )
+        resp = self._upload(client, auth, "bp.csv", csv)
+        assert resp.json()[0]["inserted"] == 2
+        assert len(client.get("/api/blood-pressure", headers=auth).json()) == 2

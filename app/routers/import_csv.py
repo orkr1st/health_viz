@@ -12,6 +12,7 @@ from app.auth import get_current_user
 from app.database import get_db
 from app.logging_config import get_import_logger
 from app.parsers import (
+    generic_csv,
     samsung_blood_pressure,
     samsung_steps,
     samsung_weight,
@@ -30,12 +31,12 @@ PARSER_MAP = {
 
 
 def _dispatch(filename: str, file_bytes: bytes, db: Session, user_id: int) -> ImportResult | None:
-    """Find a matching parser for filename and run it."""
+    """Try Samsung parsers first (by filename prefix), then generic CSV (by column detection)."""
     base = filename.rsplit("/", 1)[-1]  # strip directory path from ZIP entries
     for prefix, parser in PARSER_MAP.items():
         if base.startswith(prefix):
             return parser.parse(io.BytesIO(file_bytes), base, db, user_id)
-    return None
+    return generic_csv.detect_and_parse(io.BytesIO(file_bytes), base, db, user_id)
 
 
 def _log_result(result: ImportResult) -> None:
@@ -83,9 +84,14 @@ async def import_data(
             log.error("No parser found for: %s", filename)
             raise HTTPException(
                 status_code=400,
-                detail=f"No parser found for file: {filename}. "
-                "Filename must start with one of: "
-                + ", ".join(PARSER_MAP.keys()),
+                detail=(
+                    f"Could not detect metric in '{filename}'. "
+                    "For Samsung exports the filename must start with one of: "
+                    + ", ".join(PARSER_MAP.keys())
+                    + ". For plain CSV files the header must contain "
+                    "'systolic'+'diastolic' (blood pressure), "
+                    "'value_kg' (weight), or 'step_count'+'step_date' (steps)."
+                ),
             )
     else:
         raise HTTPException(
@@ -93,7 +99,7 @@ async def import_data(
         )
 
     if not results:
-        msg = "No recognisable Samsung Health CSV files found in upload"
+        msg = "No recognisable CSV files found in upload (Samsung Health or plain CSV format)"
         log.warning(msg)
         return [
             ImportResult(
