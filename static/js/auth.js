@@ -224,5 +224,98 @@ document.getElementById('pw-submit-btn').addEventListener('click', async () => {
   }
 });
 
+// ── Deduplicate ───────────────────────────────────────────────
+const dedupBtn       = document.getElementById('dedup-btn');
+const dedupStatus    = document.getElementById('dedup-status');
+const dedupModal     = document.getElementById('dedup-modal');
+const dedupModalBody = document.getElementById('dedup-modal-body');
+const dedupConfirm   = document.getElementById('dedup-confirm-btn');
+
+function closeDedupModal() {
+  dedupModal.classList.add('hidden');
+}
+document.getElementById('dedup-modal-close').addEventListener('click', closeDedupModal);
+document.getElementById('dedup-cancel-btn').addEventListener('click', closeDedupModal);
+dedupModal.addEventListener('click', (e) => { if (e.target === dedupModal) closeDedupModal(); });
+
+function buildDedupBody(data) {
+  const total = data.blood_pressure.length + data.weight.length + data.steps.length;
+  dedupConfirm.textContent = `Remove ${total} duplicate(s)`;
+
+  let html = `<p style="margin-bottom:0.75rem">The following records will be <strong>permanently deleted</strong>. The earliest entry in each group is kept.</p>`;
+
+  if (data.blood_pressure.length) {
+    html += `<h3 style="font-size:0.9rem;margin:0.5rem 0 0.25rem">Blood Pressure (${data.blood_pressure.length})</h3><ul class="dedup-list">`;
+    data.blood_pressure.forEach(r => {
+      const pulse = r.pulse != null ? ` pulse ${r.pulse}` : '';
+      html += `<li>${fmtDatetime(r.measured_at)} — ${r.systolic}/${r.diastolic}${pulse}</li>`;
+    });
+    html += '</ul>';
+  }
+
+  if (data.weight.length) {
+    html += `<h3 style="font-size:0.9rem;margin:0.5rem 0 0.25rem">Weight (${data.weight.length})</h3><ul class="dedup-list">`;
+    data.weight.forEach(r => {
+      html += `<li>${fmtDatetime(r.measured_at)} — ${r.value_kg.toFixed(1)} kg</li>`;
+    });
+    html += '</ul>';
+  }
+
+  if (data.steps.length) {
+    html += `<h3 style="font-size:0.9rem;margin:0.5rem 0 0.25rem">Steps (${data.steps.length})</h3><ul class="dedup-list">`;
+    data.steps.forEach(r => {
+      html += `<li>${r.step_date} — ${r.step_count.toLocaleString()} steps</li>`;
+    });
+    html += '</ul>';
+  }
+
+  dedupModalBody.innerHTML = html;
+}
+
+dedupBtn.addEventListener('click', async () => {
+  dedupStatus.textContent = 'Scanning…';
+  dedupStatus.className = 'form-status';
+  try {
+    const res = await fetch('/api/deduplicate', {
+      headers: { Authorization: `Bearer ${getToken()}` },
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const data = await res.json();
+    const total = data.blood_pressure.length + data.weight.length + data.steps.length;
+    if (total === 0) {
+      dedupStatus.textContent = 'No duplicates found.';
+    } else {
+      dedupStatus.textContent = '';
+      buildDedupBody(data);
+      dedupModal.classList.remove('hidden');
+    }
+  } catch (err) {
+    dedupStatus.textContent = 'Failed: ' + err.message;
+    dedupStatus.className = 'form-status error';
+  }
+});
+
+dedupConfirm.addEventListener('click', async () => {
+  dedupConfirm.disabled = true;
+  try {
+    const res = await fetch('/api/deduplicate', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${getToken()}` },
+    });
+    if (!res.ok) throw new Error(await res.text());
+    const data = await res.json();
+    const total = data.blood_pressure + data.weight + data.steps;
+    closeDedupModal();
+    dedupStatus.textContent =
+      `Removed ${total} duplicate(s): ${data.blood_pressure} BP, ${data.weight} weight, ${data.steps} steps.`;
+    dedupStatus.className = 'form-status success';
+  } catch (err) {
+    dedupStatus.textContent = 'Failed: ' + err.message;
+    dedupStatus.className = 'form-status error';
+  } finally {
+    dedupConfirm.disabled = false;
+  }
+});
+
 // Expose logout globally
 window.logout = logout;

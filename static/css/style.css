@@ -413,6 +413,12 @@ tr:hover td { background: #f1f5f9; }
 .modal-footer #modal-close-btn:hover { background: var(--primary-hover); }
 .modal-footer .btn-secondary      { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
 .modal-footer .btn-secondary:hover { background: var(--border); }
+.modal-footer .btn-danger         { background: var(--danger); color: #fff; border: none; }
+.modal-footer .btn-danger:hover   { background: #b91c1c; }
+
+/* Deduplicate preview list */
+.dedup-list { margin: 0 0 0.5rem 1.25rem; padding: 0; font-size: 0.85rem; color: var(--text); }
+.dedup-list li { margin-bottom: 0.15rem; }
 
 /* Import result table inside modal */
 .import-result-table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; font-size: 0.875rem; }

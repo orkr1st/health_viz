@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Health Tracker</title>
-  <link rel="stylesheet" href="/css/style.css?v=5" />
+  <link rel="stylesheet" href="/css/style.css?v=7" />
 </head>
 <body>
   <!-- ── Auth Overlay ───────────────────────────────────────── -->
@@ -62,6 +62,10 @@
           </div>
         </div>
         <button id="view-log-btn" type="button">View Log</button>
+        <div class="dedup-section">
+          <button type="button" id="dedup-btn" class="btn-link-settings">Remove duplicates…</button>
+          <p id="dedup-status" class="form-status"></p>
+        </div>
         <div id="import-status"></div>
       </div>
     </div>
@@ -223,6 +227,21 @@
 
   </main>
 
+  <!-- ── Deduplicate Preview Modal ─────────────────────────── -->
+  <div id="dedup-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="dedup-modal-title">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2 id="dedup-modal-title">Duplicate Records</h2>
+        <button id="dedup-modal-close" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body" id="dedup-modal-body"></div>
+      <div class="modal-footer">
+        <button id="dedup-cancel-btn" class="btn-secondary">Cancel</button>
+        <button id="dedup-confirm-btn" class="btn-danger">Remove duplicates</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ── Import Results Modal ───────────────────────────────── -->
   <div id="import-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
     <div class="modal-box">
@@ -245,10 +264,10 @@
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
 
-  <script src="/js/auth.js?v=5"></script>
-  <script src="/js/app.js?v=5"></script>
-  <script src="/js/charts.js?v=5"></script>
-  <script src="/js/forms.js?v=5"></script>
-  <script src="/js/import.js?v=5"></script>
+  <script src="/js/auth.js?v=7"></script>
+  <script src="/js/app.js?v=7"></script>
+  <script src="/js/charts.js?v=7"></script>
+  <script src="/js/forms.js?v=7"></script>
+  <script src="/js/import.js?v=7"></script>
 </body>
 </html>

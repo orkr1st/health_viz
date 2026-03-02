@@ -8,7 +8,7 @@ from sqlalchemy import text
 
 from app.database import Base, engine
 from app.logging_config import setup_logging
-from app.routers import blood_pressure, weight, steps, import_csv
+from app.routers import blood_pressure, weight, steps, import_csv, deduplicate
 from app.routers import auth as auth_router
 
 # Create all tables and set up logging on startup
@@ -82,6 +82,7 @@ app.include_router(blood_pressure.router)
 app.include_router(weight.router)
 app.include_router(steps.router)
 app.include_router(import_csv.router)
+app.include_router(deduplicate.router)
 
 # Serve static files (SPA) — must come last so API routes take priority
 app.mount("/", StaticFiles(directory="static", html=True), name="static")
