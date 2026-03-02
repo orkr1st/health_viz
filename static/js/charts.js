@@ -155,7 +155,7 @@ function buildWeightChart(records) {
   const sorted = [...records].reverse();
   const values = sorted.map(r => r.value_kg);
   const avg7   = rollingAvg(values, 7);
-  const goal   = parseFloat(localStorage.getItem('weightGoal'));
+  const goal   = window._weightGoal ?? NaN;
   const annotations = {};
   if (!isNaN(goal) && goal > 0) {
     annotations.goalLine = {

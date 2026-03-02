@@ -13,6 +13,7 @@ class User(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     avatar_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    weight_goal: Mapped[float | None] = mapped_column(Float, nullable=True)
 
 
 class BloodPressure(Base):

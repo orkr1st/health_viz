@@ -14,6 +14,7 @@ class UserRead(BaseModel):
     username: str
     created_at: datetime
     avatar_url: Optional[str] = None
+    weight_goal: Optional[float] = None
 
     model_config = {"from_attributes": True}
 
@@ -30,6 +31,10 @@ class TokenData(BaseModel):
 class PasswordChange(BaseModel):
     current_password: str
     new_password: str
+
+
+class WeightGoalUpdate(BaseModel):
+    value_kg: Optional[float] = None
 
 
 # Blood Pressure

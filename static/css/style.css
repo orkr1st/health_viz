@@ -431,6 +431,21 @@ tr:hover td { background: #f1f5f9; }
 .modal-footer .btn-danger         { background: var(--danger); color: #fff; border: none; }
 .modal-footer .btn-danger:hover   { background: #b91c1c; }
 
+/* Generic primary button for modal footers */
+.modal-footer .btn-primary       { background: var(--primary); color: #fff; border: none; }
+.modal-footer .btn-primary:hover { background: var(--primary-hover); }
+
+/* Help modal content */
+.help-section-title { font-size: 0.95rem; margin: 1rem 0 0.35rem; }
+.help-list { margin: 0.25rem 0 0.5rem 1.25rem; font-size: 0.875rem; }
+.help-list li { margin-bottom: 0.2rem; }
+.help-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin: 0.4rem 0 0.6rem; }
+.help-table th, .help-table td { padding: 0.35rem 0.6rem; border: 1px solid var(--border); text-align: left; }
+.help-table th { background: var(--bg); font-weight: 600; }
+.help-table code { font-size: 0.78rem; background: var(--border); padding: 0.05rem 0.3rem; border-radius: 3px; }
+.help-note { font-size: 0.8rem; color: var(--muted); margin: 0.25rem 0 0; }
+.help-note code { font-size: 0.75rem; background: var(--border); padding: 0.05rem 0.25rem; border-radius: 3px; }
+
 /* Deduplicate preview list */
 .dedup-list { margin: 0 0 0.5rem 1.25rem; padding: 0; font-size: 0.85rem; color: var(--text); }
 .dedup-list li { margin-bottom: 0.15rem; }

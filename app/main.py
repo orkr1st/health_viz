@@ -49,6 +49,13 @@ with engine.connect() as conn:
     except Exception:
         pass
 
+    # ── weight_goal column on user ───────────────────────────────────────────────
+    try:
+        conn.execute(text("ALTER TABLE \"user\" ADD COLUMN weight_goal REAL"))
+        conn.commit()
+    except Exception:
+        pass
+
     # ── Drop old single-column unique indices (conflict with user-scoped ones) ──
     for idx_name in ("uq_bp_measured_at", "uq_weight_measured_at", "uq_steps_step_date"):
         try:

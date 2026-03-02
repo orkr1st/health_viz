@@ -57,9 +57,10 @@ async function apiFetch(path, options = {}) {
   return res.json();
 }
 
-async function apiGet(path)         { return apiFetch(path); }
-async function apiPost(path, body)  { return apiFetch(path, { method: 'POST', body: JSON.stringify(body) }); }
-async function apiDelete(path)      { return apiFetch(path, { method: 'DELETE' }); }
+async function apiGet(path)          { return apiFetch(path); }
+async function apiPost(path, body)   { return apiFetch(path, { method: 'POST', body: JSON.stringify(body) }); }
+async function apiPut(path, body)    { return apiFetch(path, { method: 'PUT',  body: JSON.stringify(body) }); }
+async function apiDelete(path)       { return apiFetch(path, { method: 'DELETE' }); }
 
 // ── Date formatting ───────────────────────────────────────────
 function fmtDatetime(iso) {
@@ -95,7 +96,7 @@ function last7Days(records, dateField) {
 
 function filterRange(records, dateField, range) {
   if (range === 'all') return records;
-  const days = { '1W': 7, '1M': 30, '3M': 90, '6M': 180, '1Y': 365 }[range];
+  const days = { '1W': 7, '1M': 30, '3M': 90, '6M': 180, '1Y': 365, '5Y': 1825 }[range];
   if (!days) return records;
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - days);
@@ -108,7 +109,7 @@ function avg(arr) {
 
 // Make helpers global so other scripts can use them
 Object.assign(window, {
-  apiFetch, apiGet, apiPost, apiDelete,
+  apiFetch, apiGet, apiPost, apiPut, apiDelete,
   fmtDatetime, fmtDate, setStatus, last30Days, last7Days, avg, filterRange,
 });
 

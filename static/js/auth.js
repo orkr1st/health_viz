@@ -96,6 +96,8 @@ submitBtn.addEventListener('click', async () => {
     });
     const meUser = meRes.ok ? await meRes.json() : { username, avatar_url: null };
     setHeaderUser(meUser.username, meUser.avatar_url);
+    window._weightGoal = meUser.weight_goal ?? null;
+    window.updateWeightGoalInput?.(window._weightGoal);
     hideOverlay();
     window.dispatchEvent(new CustomEvent('authReady'));
   } catch (err) {
@@ -139,6 +141,8 @@ logoutBtn.addEventListener('click', logout);
     }
     const user = await res.json();
     setHeaderUser(user.username, user.avatar_url);
+    window._weightGoal = user.weight_goal ?? null;
+    window.updateWeightGoalInput?.(window._weightGoal);
     hideOverlay();
     window.dispatchEvent(new CustomEvent('authReady'));
   } catch {
@@ -223,6 +227,15 @@ document.getElementById('pw-submit-btn').addEventListener('click', async () => {
     pwStatus.className = 'form-status error';
   }
 });
+
+// ── Help modal ────────────────────────────────────────────────
+const helpModal = document.getElementById('help-modal');
+function openHelpModal()  { helpModal.classList.remove('hidden'); }
+function closeHelpModal() { helpModal.classList.add('hidden'); }
+document.getElementById('help-btn').addEventListener('click', openHelpModal);
+document.getElementById('help-modal-close').addEventListener('click', closeHelpModal);
+document.getElementById('help-modal-close-btn').addEventListener('click', closeHelpModal);
+helpModal.addEventListener('click', e => { if (e.target === helpModal) closeHelpModal(); });
 
 // ── Deduplicate ───────────────────────────────────────────────
 const dedupBtn       = document.getElementById('dedup-btn');

@@ -60,6 +60,18 @@ def change_password(
     return current_user
 
 
+@router.put("/weight-goal", response_model=schemas.UserRead)
+def update_weight_goal(
+    body: schemas.WeightGoalUpdate,
+    current_user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    current_user.weight_goal = body.value_kg
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
+
 AVATAR_DIR = "static/avatars"
 ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
 

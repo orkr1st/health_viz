@@ -127,20 +127,23 @@ function renderWeightTable(records) {
 }
 
 // ── Weight goal ───────────────────────────────────────────────
-(function () {
-  const input = document.getElementById('weight-goal-input');
-  const saved = localStorage.getItem('weightGoal');
-  if (saved) input.value = saved;
+function updateWeightGoalInput(goal) {
+  if (goal != null) document.getElementById('weight-goal-input').value = goal;
+}
 
-  document.getElementById('weight-goal-save').addEventListener('click', () => {
-    const val = parseFloat(input.value);
-    const status = document.getElementById('weight-goal-status');
-    if (isNaN(val) || val <= 0) { setStatus(status, 'Enter a valid weight', true); return; }
-    localStorage.setItem('weightGoal', val);
-    window._weightData && buildWeightChart(window._weightData);
+document.getElementById('weight-goal-save').addEventListener('click', async () => {
+  const val = parseFloat(document.getElementById('weight-goal-input').value);
+  const status = document.getElementById('weight-goal-status');
+  if (isNaN(val) || val <= 0) { setStatus(status, 'Enter a valid weight', true); return; }
+  try {
+    const user = await apiPut('/api/auth/weight-goal', { value_kg: val });
+    window._weightGoal = user.weight_goal;
+    window._weightData && applyWeightRange();
     setStatus(status, 'Goal saved!');
-  });
-})();
+  } catch (err) {
+    setStatus(status, err.message, true);
+  }
+});
 
 document.getElementById('weight-form').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -242,5 +245,6 @@ window.addEventListener('tabchange', async (e) => {
   if (tab === 'steps')          await loadStepsData().catch(console.error);
 });
 
-// Expose apply helpers so charts.js tabchange can use them
-Object.assign(window, { applyBpRange, applyWeightRange, applyStepsRange });
+// Expose apply helpers so charts.js tabchange can use them, and
+// updateWeightGoalInput so auth.js can populate it after login.
+Object.assign(window, { applyBpRange, applyWeightRange, applyStepsRange, updateWeightGoalInput });
