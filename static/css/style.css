@@ -266,6 +266,39 @@ main { padding: 1.5rem; max-width: 1400px; margin: 0 auto; }
 .form-status.success { color: var(--success); }
 .form-status.error   { color: var(--danger); }
 
+/* ── Change password ─────────────────────────────────────────── */
+.change-pw-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.change-pw-section label {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.8rem;
+  color: var(--muted);
+  gap: 0.2rem;
+}
+.change-pw-section input[type="password"] {
+  width: 100%;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  color: var(--text);
+  background: var(--bg);
+}
+.btn-link-settings {
+  background: none;
+  border: none;
+  color: var(--primary);
+  cursor: pointer;
+  font-size: 0.875rem;
+  text-align: left;
+  padding: 0;
+  text-decoration: underline;
+}
+
 /* ── Table ──────────────────────────────────────────────────── */
 .table-area { overflow-x: auto; }
 

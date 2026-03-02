@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Health Tracker</title>
-  <link rel="stylesheet" href="/css/style.css?v=4" />
+  <link rel="stylesheet" href="/css/style.css?v=5" />
 </head>
 <body>
   <!-- ── Auth Overlay ───────────────────────────────────────── -->
@@ -44,6 +44,22 @@
         <div class="settings-avatar-row">
           <label>Profile picture:</label>
           <button type="button" id="change-avatar-btn">Change avatar…</button>
+        </div>
+        <div class="change-pw-section">
+          <button type="button" id="pw-toggle-btn" class="btn-link-settings">Change password…</button>
+          <div id="pw-fields" style="display:none">
+            <label>Current password
+              <input type="password" id="pw-current" autocomplete="current-password" />
+            </label>
+            <label>New password
+              <input type="password" id="pw-new" autocomplete="new-password" />
+            </label>
+            <label>Confirm new password
+              <input type="password" id="pw-confirm" autocomplete="new-password" />
+            </label>
+            <button type="button" id="pw-submit-btn">Update password</button>
+            <p id="pw-status" class="form-status"></p>
+          </div>
         </div>
         <button id="view-log-btn" type="button">View Log</button>
         <div id="import-status"></div>
@@ -229,10 +245,10 @@
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
 
-  <script src="/js/auth.js?v=4"></script>
-  <script src="/js/app.js?v=4"></script>
-  <script src="/js/charts.js?v=4"></script>
-  <script src="/js/forms.js?v=4"></script>
-  <script src="/js/import.js?v=4"></script>
+  <script src="/js/auth.js?v=5"></script>
+  <script src="/js/app.js?v=5"></script>
+  <script src="/js/charts.js?v=5"></script>
+  <script src="/js/forms.js?v=5"></script>
+  <script src="/js/import.js?v=5"></script>
 </body>
 </html>

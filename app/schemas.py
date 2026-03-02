@@ -27,6 +27,11 @@ class TokenData(BaseModel):
     username: Optional[str] = None
 
 
+class PasswordChange(BaseModel):
+    current_password: str
+    new_password: str
+
+
 # Blood Pressure
 class BloodPressureCreate(BaseModel):
     systolic: int

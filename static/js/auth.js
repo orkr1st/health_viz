@@ -170,5 +170,59 @@ document.getElementById('avatar-file-input').addEventListener('change', async (e
   e.target.value = '';
 });
 
+// ── Change password ───────────────────────────────────────────
+const pwToggleBtn = document.getElementById('pw-toggle-btn');
+const pwFields    = document.getElementById('pw-fields');
+const pwStatus    = document.getElementById('pw-status');
+
+pwToggleBtn.addEventListener('click', () => {
+  const open = pwFields.style.display !== 'none';
+  pwFields.style.display = open ? 'none' : '';
+  pwToggleBtn.textContent = open ? 'Change password…' : 'Hide';
+  pwStatus.textContent = '';
+  pwStatus.className = 'form-status';
+  if (!open) document.getElementById('pw-current').focus();
+});
+
+document.getElementById('pw-submit-btn').addEventListener('click', async () => {
+  const current = document.getElementById('pw-current').value;
+  const newPw   = document.getElementById('pw-new').value;
+  const confirm = document.getElementById('pw-confirm').value;
+  pwStatus.textContent = '';
+  pwStatus.className = 'form-status';
+
+  if (!current || !newPw) {
+    pwStatus.textContent = 'All fields are required.';
+    pwStatus.className = 'form-status error';
+    return;
+  }
+  if (newPw !== confirm) {
+    pwStatus.textContent = 'New passwords do not match.';
+    pwStatus.className = 'form-status error';
+    return;
+  }
+
+  const res = await fetch('/api/auth/change-password', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${getToken()}`,
+    },
+    body: JSON.stringify({ current_password: current, new_password: newPw }),
+  });
+
+  if (res.ok) {
+    pwStatus.textContent = 'Password updated.';
+    pwStatus.className = 'form-status success';
+    document.getElementById('pw-current').value = '';
+    document.getElementById('pw-new').value = '';
+    document.getElementById('pw-confirm').value = '';
+  } else {
+    const data = await res.json().catch(() => ({}));
+    pwStatus.textContent = data.detail || 'Failed to update password.';
+    pwStatus.className = 'form-status error';
+  }
+});
+
 // Expose logout globally
 window.logout = logout;
