@@ -132,6 +132,21 @@ header h1 { font-size: 1.25rem; font-weight: 700; white-space: nowrap; }
 /* ── Content ────────────────────────────────────────────────── */
 main { padding: 1.5rem; max-width: 1400px; margin: 0 auto; }
 
+/* ── Range selector ─────────────────────────────────────────── */
+.range-bar { display: flex; gap: 0.35rem; margin-bottom: 1rem; }
+.range-btn {
+  padding: 0.2rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+.range-btn.active          { background: var(--primary); color: #fff; border-color: var(--primary); }
+.range-btn:hover:not(.active) { background: var(--border); }
+
 .tab-content { display: none; }
 .tab-content.active { display: block; }
 

@@ -17,19 +17,34 @@ function makeDeleteBtn(endpoint, id, onDelete) {
   return btn;
 }
 
+// ── Range state ───────────────────────────────────────────────
+const ranges = { bp: '1M', weight: '1M', steps: '1M' };
+
+function _setRangeActive(tabId, range) {
+  document.querySelectorAll(`#${tabId} .range-btn`).forEach(b =>
+    b.classList.toggle('active', b.dataset.range === range));
+}
+
 // ── Blood Pressure ────────────────────────────────────────────
 
 async function loadBpData() {
   const data = await apiGet('/api/blood-pressure');
   window._bpData = data;
-  renderBpTable(data);
-  buildBpChart(data);
+  applyBpRange();
+}
+
+function applyBpRange() {
+  if (!window._bpData) return;
+  const filtered = filterRange(window._bpData, 'measured_at', ranges.bp);
+  renderBpTable(filtered);
+  buildBpChart(filtered);
 }
 
 function renderBpTable(records) {
   const tbody = document.querySelector('#bp-table tbody');
   if (!records.length) {
-    tbody.innerHTML = '<tr class="empty-row"><td colspan="6">No records yet</td></tr>';
+    const msg = window._bpData && window._bpData.length ? 'No records in selected range' : 'No records yet';
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="6">${msg}</td></tr>`;
     return;
   }
   tbody.innerHTML = '';
@@ -68,19 +83,34 @@ document.getElementById('bp-form').addEventListener('submit', async (e) => {
   }
 });
 
+document.querySelectorAll('#tab-blood-pressure .range-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    ranges.bp = btn.dataset.range;
+    _setRangeActive('tab-blood-pressure', ranges.bp);
+    applyBpRange();
+  });
+});
+
 // ── Weight ────────────────────────────────────────────────────
 
 async function loadWeightData() {
   const data = await apiGet('/api/weight');
   window._weightData = data;
-  renderWeightTable(data);
-  buildWeightChart(data);
+  applyWeightRange();
+}
+
+function applyWeightRange() {
+  if (!window._weightData) return;
+  const filtered = filterRange(window._weightData, 'measured_at', ranges.weight);
+  renderWeightTable(filtered);
+  buildWeightChart(filtered);
 }
 
 function renderWeightTable(records) {
   const tbody = document.querySelector('#weight-table tbody');
   if (!records.length) {
-    tbody.innerHTML = '<tr class="empty-row"><td colspan="4">No records yet</td></tr>';
+    const msg = window._weightData && window._weightData.length ? 'No records in selected range' : 'No records yet';
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="4">${msg}</td></tr>`;
     return;
   }
   tbody.innerHTML = '';
@@ -131,20 +161,35 @@ document.getElementById('weight-form').addEventListener('submit', async (e) => {
   }
 });
 
+document.querySelectorAll('#tab-weight .range-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    ranges.weight = btn.dataset.range;
+    _setRangeActive('tab-weight', ranges.weight);
+    applyWeightRange();
+  });
+});
+
 // ── Steps ─────────────────────────────────────────────────────
 
 async function loadStepsData() {
   const data = await apiGet('/api/steps');
   window._stepsData = data;
-  renderStepsTable(data);
-  buildStepsChart(data);
-  buildDistanceChart(data);
+  applyStepsRange();
+}
+
+function applyStepsRange() {
+  if (!window._stepsData) return;
+  const filtered = filterRange(window._stepsData, 'step_date', ranges.steps);
+  renderStepsTable(filtered);
+  buildStepsChart(filtered);
+  buildDistanceChart(filtered);
 }
 
 function renderStepsTable(records) {
   const tbody = document.querySelector('#steps-table tbody');
   if (!records.length) {
-    tbody.innerHTML = '<tr class="empty-row"><td colspan="4">No records yet</td></tr>';
+    const msg = window._stepsData && window._stepsData.length ? 'No records in selected range' : 'No records yet';
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="4">${msg}</td></tr>`;
     return;
   }
   tbody.innerHTML = '';
@@ -181,10 +226,21 @@ document.getElementById('steps-form').addEventListener('submit', async (e) => {
   }
 });
 
+document.querySelectorAll('#tab-steps .range-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    ranges.steps = btn.dataset.range;
+    _setRangeActive('tab-steps', ranges.steps);
+    applyStepsRange();
+  });
+});
+
 // ── Load data when tab is shown ───────────────────────────────
 window.addEventListener('tabchange', async (e) => {
   const tab = e.detail;
   if (tab === 'blood-pressure') await loadBpData().catch(console.error);
   if (tab === 'weight')         await loadWeightData().catch(console.error);
-if (tab === 'steps')          await loadStepsData().catch(console.error);
+  if (tab === 'steps')          await loadStepsData().catch(console.error);
 });
+
+// Expose apply helpers so charts.js tabchange can use them
+Object.assign(window, { applyBpRange, applyWeightRange, applyStepsRange });

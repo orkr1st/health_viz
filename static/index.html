@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Health Tracker</title>
-  <link rel="stylesheet" href="/css/style.css?v=7" />
+  <link rel="stylesheet" href="/css/style.css?v=8" />
 </head>
 <body>
   <!-- ── Auth Overlay ───────────────────────────────────────── -->
@@ -109,6 +109,14 @@
     <!-- ── Blood Pressure ─────────────────────────────────────── -->
     <section id="tab-blood-pressure" class="tab-content">
       <h2>Blood Pressure</h2>
+      <div class="range-bar">
+        <button class="range-btn" data-range="1W">1W</button>
+        <button class="range-btn active" data-range="1M">1M</button>
+        <button class="range-btn" data-range="3M">3M</button>
+        <button class="range-btn" data-range="6M">6M</button>
+        <button class="range-btn" data-range="1Y">1Y</button>
+        <button class="range-btn" data-range="all">All</button>
+      </div>
       <div class="tab-layout">
         <div class="chart-area">
           <canvas id="bp-chart"></canvas>
@@ -151,6 +159,14 @@
     <!-- ── Weight ─────────────────────────────────────────────── -->
     <section id="tab-weight" class="tab-content">
       <h2>Weight</h2>
+      <div class="range-bar">
+        <button class="range-btn" data-range="1W">1W</button>
+        <button class="range-btn active" data-range="1M">1M</button>
+        <button class="range-btn" data-range="3M">3M</button>
+        <button class="range-btn" data-range="6M">6M</button>
+        <button class="range-btn" data-range="1Y">1Y</button>
+        <button class="range-btn" data-range="all">All</button>
+      </div>
       <div class="tab-layout">
         <div class="chart-area">
           <canvas id="weight-chart"></canvas>
@@ -193,6 +209,14 @@
 <!-- ── Steps ──────────────────────────────────────────────── -->
     <section id="tab-steps" class="tab-content">
       <h2>Steps</h2>
+      <div class="range-bar">
+        <button class="range-btn" data-range="1W">1W</button>
+        <button class="range-btn active" data-range="1M">1M</button>
+        <button class="range-btn" data-range="3M">3M</button>
+        <button class="range-btn" data-range="6M">6M</button>
+        <button class="range-btn" data-range="1Y">1Y</button>
+        <button class="range-btn" data-range="all">All</button>
+      </div>
       <div class="tab-layout">
         <div class="chart-area">
           <canvas id="steps-chart"></canvas>
@@ -264,10 +288,10 @@
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
 
-  <script src="/js/auth.js?v=7"></script>
-  <script src="/js/app.js?v=7"></script>
-  <script src="/js/charts.js?v=7"></script>
-  <script src="/js/forms.js?v=7"></script>
-  <script src="/js/import.js?v=7"></script>
+  <script src="/js/auth.js?v=8"></script>
+  <script src="/js/app.js?v=8"></script>
+  <script src="/js/charts.js?v=8"></script>
+  <script src="/js/forms.js?v=8"></script>
+  <script src="/js/import.js?v=8"></script>
 </body>
 </html>

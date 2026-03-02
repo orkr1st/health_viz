@@ -250,9 +250,9 @@ window.addEventListener('authReady', () => loadDashboard().catch(console.error))
 window.addEventListener('tabchange', async (e) => {
   const tab = e.detail;
   if (tab === 'dashboard')      { await loadDashboard().catch(console.error); }
-  if (tab === 'blood-pressure') { window._bpData && buildBpChart(window._bpData); }
-  if (tab === 'weight')         { window._weightData && buildWeightChart(window._weightData); }
-  if (tab === 'steps')          { window._stepsData && buildStepsChart(window._stepsData); window._stepsData && buildDistanceChart(window._stepsData); }
+  if (tab === 'blood-pressure') { window.applyBpRange?.(); }
+  if (tab === 'weight')         { window.applyWeightRange?.(); }
+  if (tab === 'steps')          { window.applyStepsRange?.(); }
 });
 
 // expose builders so forms.js can call them after mutations
