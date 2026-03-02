@@ -7,6 +7,18 @@ services:
       - ./health.db:/app/health.db
       - ./logs:/app/logs
       - ./avatars:/app/static/avatars
+      - ./certs:/app/certs:ro
     env_file:
       - .env
+    command:
+      - uvicorn
+      - app.main:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8443"
+      - --ssl-keyfile
+      - /app/certs/key.pem
+      - --ssl-certfile
+      - /app/certs/cert.pem
     restart: unless-stopped

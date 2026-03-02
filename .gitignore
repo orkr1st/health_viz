@@ -2,6 +2,9 @@
 health.db
 temp/
 
+# TLS certificates — private keys must never be committed
+certs/
+
 # Application logs
 logs/
 
