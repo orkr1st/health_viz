@@ -23,11 +23,17 @@ from app.schemas import ImportResult
 router = APIRouter(prefix="/api/import", tags=["import"])
 
 # Map filename prefix → parser module
-# Prefixes confirmed against real Samsung Health ZIP export (2026-02)
+# Both namespace variants (shealth / health) included for cross-version compatibility
 PARSER_MAP = {
-    "com.samsung.shealth.blood_pressure": samsung_blood_pressure,
-    "com.samsung.health.weight": samsung_weight,
+    # Blood pressure
+    "com.samsung.shealth.blood_pressure":   samsung_blood_pressure,
+    "com.samsung.health.blood_pressure":    samsung_blood_pressure,
+    # Weight
+    "com.samsung.health.weight":            samsung_weight,
+    "com.samsung.shealth.weight":           samsung_weight,
+    # Steps
     "com.samsung.shealth.step_daily_trend": samsung_steps,
+    "com.samsung.health.step_daily_trend":  samsung_steps,
 }
 
 
@@ -35,16 +41,27 @@ def _dispatch(filename: str, file_bytes: bytes, db: Session, user_id: int) -> Im
     """Try Samsung parsers first (by filename prefix), then generic CSV (by column detection)."""
     base = filename.rsplit("/", 1)[-1]  # strip directory path from ZIP entries
 
+    # Resolve Samsung parser (if any) before touching the DB
+    matched_parser = None
+    for prefix, parser in PARSER_MAP.items():
+        if base.startswith(prefix):
+            matched_parser = parser
+            break
+
+    # Samsung file with no known parser → skip entirely, no batch row created
+    if matched_parser is None and base.startswith("com.samsung."):
+        log = get_import_logger()
+        log.info("[IMPORT] skipped unrecognised Samsung file: %s", base)
+        return None
+
     # Create an ImportBatch row so we can track which file each record came from
     batch = ImportBatch(user_id=user_id, filename=base)
     db.add(batch)
     db.commit()
     db.refresh(batch)
 
-    for prefix, parser in PARSER_MAP.items():
-        if base.startswith(prefix):
-            result = parser.parse(io.BytesIO(file_bytes), base, db, user_id, import_batch_id=batch.id)
-            break
+    if matched_parser is not None:
+        result = matched_parser.parse(io.BytesIO(file_bytes), base, db, user_id, import_batch_id=batch.id)
     else:
         result = generic_csv.detect_and_parse(io.BytesIO(file_bytes), base, db, user_id, import_batch_id=batch.id)
 
