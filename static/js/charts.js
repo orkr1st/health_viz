@@ -1,5 +1,5 @@
 // ── Shared chart defaults ─────────────────────────────────────
-Chart.defaults.font.family = 'system-ui, sans-serif';
+Chart.defaults.font.family = "'Figtree', system-ui, sans-serif";
 Chart.defaults.font.size   = 12;
 
 const TIME_SCALE = {
