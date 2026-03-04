@@ -32,7 +32,7 @@ def _parse_dt(value: str) -> datetime:
     raise ValueError(f"Cannot parse datetime: {value!r}")
 
 
-def _parse_blood_pressure(df: pd.DataFrame, filename: str, db: Session, user_id: int) -> ImportResult:
+def _parse_blood_pressure(df: pd.DataFrame, filename: str, db: Session, user_id: int, import_batch_id: int | None = None) -> ImportResult:
     df["_systolic"]  = pd.to_numeric(df["systolic"],  errors="coerce")
     df["_diastolic"] = pd.to_numeric(df["diastolic"], errors="coerce")
     df["_pulse"]     = pd.to_numeric(df["pulse"],     errors="coerce") if "pulse" in df.columns else pd.NA
@@ -62,10 +62,10 @@ def _parse_blood_pressure(df: pd.DataFrame, filename: str, db: Session, user_id:
             .first() is not None
         )
 
-    return save_records(db, df, filename, "blood_pressure", row_to_record, exists_check, user_id)
+    return save_records(db, df, filename, "blood_pressure", row_to_record, exists_check, user_id, import_batch_id)
 
 
-def _parse_weight(df: pd.DataFrame, filename: str, db: Session, user_id: int) -> ImportResult:
+def _parse_weight(df: pd.DataFrame, filename: str, db: Session, user_id: int, import_batch_id: int | None = None) -> ImportResult:
     df["_value_kg"] = pd.to_numeric(df["value_kg"], errors="coerce")
     has_notes = "notes" in df.columns
     df = df.dropna(subset=["_value_kg", "measured_at"]).copy()
@@ -89,10 +89,10 @@ def _parse_weight(df: pd.DataFrame, filename: str, db: Session, user_id: int) ->
             .first() is not None
         )
 
-    return save_records(db, df, filename, "weight", row_to_record, exists_check, user_id)
+    return save_records(db, df, filename, "weight", row_to_record, exists_check, user_id, import_batch_id)
 
 
-def _parse_steps(df: pd.DataFrame, filename: str, db: Session, user_id: int) -> ImportResult:
+def _parse_steps(df: pd.DataFrame, filename: str, db: Session, user_id: int, import_batch_id: int | None = None) -> ImportResult:
     df["_step_count"] = pd.to_numeric(df["step_count"], errors="coerce")
     df["_distance_m"] = pd.to_numeric(df["distance_m"], errors="coerce") if "distance_m" in df.columns else pd.NA
     df = df.dropna(subset=["_step_count", "step_date"]).copy()
@@ -116,10 +116,10 @@ def _parse_steps(df: pd.DataFrame, filename: str, db: Session, user_id: int) -> 
             .first() is not None
         )
 
-    return save_records(db, df, filename, "steps", row_to_record, exists_check, user_id)
+    return save_records(db, df, filename, "steps", row_to_record, exists_check, user_id, import_batch_id)
 
 
-def detect_and_parse(f, filename: str, db: Session, user_id: int) -> ImportResult | None:
+def detect_and_parse(f, filename: str, db: Session, user_id: int, import_batch_id: int | None = None) -> ImportResult | None:
     """
     Read the CSV header and route to the appropriate metric parser.
     Returns None if no metric can be detected from the columns.
@@ -130,9 +130,9 @@ def detect_and_parse(f, filename: str, db: Session, user_id: int) -> ImportResul
 
     cols = set(df.columns)
     if "systolic" in cols and "diastolic" in cols:
-        return _parse_blood_pressure(df, filename, db, user_id)
+        return _parse_blood_pressure(df, filename, db, user_id, import_batch_id)
     if "value_kg" in cols:
-        return _parse_weight(df, filename, db, user_id)
+        return _parse_weight(df, filename, db, user_id, import_batch_id)
     if "step_count" in cols and "step_date" in cols:
-        return _parse_steps(df, filename, db, user_id)
+        return _parse_steps(df, filename, db, user_id, import_batch_id)
     return None

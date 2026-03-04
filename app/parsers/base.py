@@ -22,6 +22,7 @@ def save_records(
     row_to_record: Callable[[pd.Series, int], Any],
     exists_check: Callable[[Session, pd.Series, int], bool],
     user_id: int,
+    import_batch_id: int | None = None,
 ) -> ImportResult:
     """
     Iterate df rows, skip duplicates, insert new records.
@@ -42,6 +43,8 @@ def save_records(
                 skipped += 1
                 continue
             record = row_to_record(row, user_id)
+            if import_batch_id is not None:
+                record.import_batch_id = import_batch_id
             db.add(record)
             db.commit()
             inserted += 1

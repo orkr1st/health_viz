@@ -101,6 +101,18 @@ class StepsRead(StepsCreate):
     model_config = {"from_attributes": True}
 
 
+# Import batch
+class ImportBatchRead(BaseModel):
+    id: int
+    filename: str
+    imported_at: datetime
+    bp_count: int
+    weight_count: int
+    steps_count: int
+
+    model_config = {"from_attributes": True}
+
+
 # Import result
 class ImportResult(BaseModel):
     filename: str

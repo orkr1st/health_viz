@@ -10,6 +10,7 @@ from app.database import Base, engine
 from app.logging_config import setup_logging
 from app.routers import blood_pressure, weight, steps, import_csv, deduplicate
 from app.routers import auth as auth_router
+from app.routers import imports as imports_router
 
 # Create all tables and set up logging on startup
 Base.metadata.create_all(bind=engine)
@@ -79,6 +80,30 @@ with engine.connect() as conn:
     ))
     conn.commit()
 
+    # ── import_batch table ───────────────────────────────────────────────────────
+    conn.execute(text("""
+        CREATE TABLE IF NOT EXISTS import_batch (
+            id           INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id      INTEGER NOT NULL REFERENCES "user"(id),
+            filename     TEXT    NOT NULL,
+            imported_at  DATETIME DEFAULT (CURRENT_TIMESTAMP),
+            bp_count     INTEGER DEFAULT 0,
+            weight_count INTEGER DEFAULT 0,
+            steps_count  INTEGER DEFAULT 0
+        )
+    """))
+    conn.commit()
+
+    # ── import_batch_id columns on data tables ───────────────────────────────────
+    for tbl in ("blood_pressure", "weight", "steps"):
+        try:
+            conn.execute(text(
+                f'ALTER TABLE "{tbl}" ADD COLUMN import_batch_id INTEGER REFERENCES import_batch(id)'
+            ))
+            conn.commit()
+        except Exception:
+            pass
+
 os.makedirs("static/avatars", exist_ok=True)
 
 app = FastAPI(title="Health Tracker", version="1.0.0")
@@ -90,6 +115,7 @@ app.include_router(weight.router)
 app.include_router(steps.router)
 app.include_router(import_csv.router)
 app.include_router(deduplicate.router)
+app.include_router(imports_router.router)
 
 # Serve static files (SPA) — must come last so API routes take priority
 app.mount("/", StaticFiles(directory="static", html=True), name="static")

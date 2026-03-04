@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app import models
 from app.auth import get_current_user
 from app.database import get_db
+from app.models import ImportBatch
 from app.logging_config import get_import_logger
 from app.parsers import (
     generic_csv,
@@ -33,10 +34,40 @@ PARSER_MAP = {
 def _dispatch(filename: str, file_bytes: bytes, db: Session, user_id: int) -> ImportResult | None:
     """Try Samsung parsers first (by filename prefix), then generic CSV (by column detection)."""
     base = filename.rsplit("/", 1)[-1]  # strip directory path from ZIP entries
+
+    # Create an ImportBatch row so we can track which file each record came from
+    batch = ImportBatch(user_id=user_id, filename=base)
+    db.add(batch)
+    db.commit()
+    db.refresh(batch)
+
     for prefix, parser in PARSER_MAP.items():
         if base.startswith(prefix):
-            return parser.parse(io.BytesIO(file_bytes), base, db, user_id)
-    return generic_csv.detect_and_parse(io.BytesIO(file_bytes), base, db, user_id)
+            result = parser.parse(io.BytesIO(file_bytes), base, db, user_id, import_batch_id=batch.id)
+            break
+    else:
+        result = generic_csv.detect_and_parse(io.BytesIO(file_bytes), base, db, user_id, import_batch_id=batch.id)
+
+    if result is None:
+        # No parser matched — remove the batch row
+        db.delete(batch)
+        db.commit()
+        return None
+
+    # Update batch counts
+    if result.metric == "blood_pressure":
+        batch.bp_count = result.inserted
+    elif result.metric == "weight":
+        batch.weight_count = result.inserted
+    elif result.metric == "steps":
+        batch.steps_count = result.inserted
+
+    # If nothing was inserted (all skipped/errors), remove the empty batch
+    if result.inserted == 0:
+        db.delete(batch)
+    db.commit()
+
+    return result
 
 
 def _log_result(result: ImportResult) -> None:

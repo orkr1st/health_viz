@@ -16,6 +16,18 @@ class User(Base):
     weight_goal: Mapped[float | None] = mapped_column(Float, nullable=True)
 
 
+class ImportBatch(Base):
+    __tablename__ = "import_batch"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("user.id"), nullable=False)
+    filename: Mapped[str] = mapped_column(String, nullable=False)
+    imported_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    bp_count: Mapped[int] = mapped_column(Integer, default=0)
+    weight_count: Mapped[int] = mapped_column(Integer, default=0)
+    steps_count: Mapped[int] = mapped_column(Integer, default=0)
+
+
 class BloodPressure(Base):
     __tablename__ = "blood_pressure"
 
@@ -27,6 +39,7 @@ class BloodPressure(Base):
     measured_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    import_batch_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("import_batch.id"), nullable=True)
 
     __table_args__ = (UniqueConstraint("user_id", "measured_at", name="uq_bp_user_time"),)
 
@@ -40,6 +53,7 @@ class Weight(Base):
     measured_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    import_batch_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("import_batch.id"), nullable=True)
 
     __table_args__ = (UniqueConstraint("user_id", "measured_at", name="uq_weight_user_time"),)
 
@@ -53,5 +67,6 @@ class Steps(Base):
     step_count: Mapped[int] = mapped_column(Integer, nullable=False)
     distance_m: Mapped[float | None] = mapped_column(Float, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    import_batch_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("import_batch.id"), nullable=True)
 
     __table_args__ = (UniqueConstraint("user_id", "step_date", name="uq_steps_user_date"),)

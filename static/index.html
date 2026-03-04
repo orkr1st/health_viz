@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Health Tracker</title>
-  <link rel="stylesheet" href="/css/style.css?v=10" />
+  <link rel="stylesheet" href="/css/style.css?v=11" />
 </head>
 <body>
   <!-- ── Auth Overlay ───────────────────────────────────────── -->
@@ -67,6 +67,7 @@
           <button type="button" id="dedup-btn" class="btn-link-settings">Remove duplicates…</button>
           <p id="dedup-status" class="form-status"></p>
         </div>
+        <button type="button" id="import-history-btn" class="btn-link-settings">Import history…</button>
         <div id="import-status"></div>
       </div>
     </div>
@@ -341,6 +342,17 @@
     </div>
   </div>
 
+  <!-- ── Import History Modal ──────────────────────────────── -->
+  <div id="import-history-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="import-history-modal-title">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h2 id="import-history-modal-title">Import History</h2>
+        <button id="import-history-modal-close" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body" id="import-history-list"><!-- filled by JS --></div>
+    </div>
+  </div>
+
   <!-- ── Import Results Modal ───────────────────────────────── -->
   <div id="import-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
     <div class="modal-box">
@@ -363,10 +375,10 @@
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
 
-  <script src="/js/auth.js?v=10"></script>
-  <script src="/js/app.js?v=10"></script>
-  <script src="/js/charts.js?v=10"></script>
-  <script src="/js/forms.js?v=10"></script>
-  <script src="/js/import.js?v=10"></script>
+  <script src="/js/auth.js?v=11"></script>
+  <script src="/js/app.js?v=11"></script>
+  <script src="/js/charts.js?v=11"></script>
+  <script src="/js/forms.js?v=11"></script>
+  <script src="/js/import.js?v=11"></script>
 </body>
 </html>

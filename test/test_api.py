@@ -580,3 +580,93 @@ class TestGenericCsvImport:
         resp = self._upload(client, auth, "bp.csv", csv)
         assert resp.json()[0]["inserted"] == 2
         assert len(client.get("/api/blood-pressure", headers=auth).json()) == 2
+
+
+# ── Import history ─────────────────────────────────────────────────────────────
+
+class TestImportHistory:
+    def _upload_bp(self, client, auth):
+        with open(BP_CSV, "rb") as f:
+            return client.post(
+                "/api/import",
+                files={"file": (BP_CSV.name, f, "text/csv")},
+                headers=auth,
+            )
+
+    def _upload_weight(self, client, auth):
+        with open(WEIGHT_CSV, "rb") as f:
+            return client.post(
+                "/api/import",
+                files={"file": (WEIGHT_CSV.name, f, "text/csv")},
+                headers=auth,
+            )
+
+    def test_empty_history(self, client, auth):
+        resp = client.get("/api/imports", headers=auth)
+        assert resp.status_code == 200
+        assert resp.json() == []
+
+    def test_bp_import_creates_batch(self, client, auth):
+        self._upload_bp(client, auth)
+        resp = client.get("/api/imports", headers=auth)
+        assert resp.status_code == 200
+        batches = resp.json()
+        assert len(batches) == 1
+        assert batches[0]["bp_count"] == 1
+        assert batches[0]["weight_count"] == 0
+        assert batches[0]["steps_count"] == 0
+        assert BP_CSV.name in batches[0]["filename"]
+
+    def test_two_imports_create_two_batches(self, client, auth):
+        self._upload_bp(client, auth)
+        self._upload_weight(client, auth)
+        batches = client.get("/api/imports", headers=auth).json()
+        assert len(batches) == 2
+
+    def test_delete_batch_removes_records(self, client, auth):
+        self._upload_bp(client, auth)
+        batches = client.get("/api/imports", headers=auth).json()
+        batch_id = batches[0]["id"]
+
+        # Records exist before delete
+        assert len(client.get("/api/blood-pressure", headers=auth).json()) == 1
+
+        resp = client.delete(f"/api/imports/{batch_id}", headers=auth)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["deleted_bp"] == 1
+        assert data["deleted_weight"] == 0
+        assert data["deleted_steps"] == 0
+
+        # Records gone after delete
+        assert client.get("/api/blood-pressure", headers=auth).json() == []
+        # Batch also gone
+        assert client.get("/api/imports", headers=auth).json() == []
+
+    def test_delete_is_user_scoped(self, client, auth):
+        # Upload BP for tester
+        self._upload_bp(client, auth)
+        batch_id = client.get("/api/imports", headers=auth).json()[0]["id"]
+
+        # Second user tries to delete tester's batch
+        client.post("/api/auth/register", json={"username": "other_ih", "password": "pw"})
+        r2 = client.post("/api/auth/token", data={"username": "other_ih", "password": "pw"})
+        other_auth = {"Authorization": f"Bearer {r2.json()['access_token']}"}
+
+        resp = client.delete(f"/api/imports/{batch_id}", headers=other_auth)
+        assert resp.status_code == 404
+
+        # Tester's records still intact
+        assert len(client.get("/api/blood-pressure", headers=auth).json()) == 1
+
+    def test_all_skipped_creates_no_batch(self, client, auth):
+        # Import BP CSV twice — second import should create no batch (0 inserted)
+        self._upload_bp(client, auth)
+        self._upload_bp(client, auth)
+        batches = client.get("/api/imports", headers=auth).json()
+        # Only the first import should have a batch
+        assert len(batches) == 1
+
+    def test_requires_auth(self, client):
+        assert client.get("/api/imports").status_code == 401
+        assert client.delete("/api/imports/1").status_code == 401

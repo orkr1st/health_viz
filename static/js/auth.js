@@ -330,5 +330,82 @@ dedupConfirm.addEventListener('click', async () => {
   }
 });
 
+// ── Import History ────────────────────────────────────────────
+const importHistoryBtn   = document.getElementById('import-history-btn');
+const importHistoryModal = document.getElementById('import-history-modal');
+const importHistoryList  = document.getElementById('import-history-list');
+
+function closeImportHistoryModal() {
+  importHistoryModal.classList.add('hidden');
+}
+document.getElementById('import-history-modal-close').addEventListener('click', closeImportHistoryModal);
+importHistoryModal.addEventListener('click', e => { if (e.target === importHistoryModal) closeImportHistoryModal(); });
+
+function fmtImportDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+}
+
+function renderImportHistory(batches) {
+  if (!batches.length) {
+    importHistoryList.innerHTML = '<p class="import-history-empty">No imports found.</p>';
+    return;
+  }
+  importHistoryList.innerHTML = batches.map(b => {
+    const counts = [];
+    if (b.bp_count)     counts.push(`${b.bp_count} BP`);
+    if (b.weight_count) counts.push(`${b.weight_count} weight`);
+    if (b.steps_count)  counts.push(`${b.steps_count} steps`);
+    const countStr = counts.length ? counts.join(', ') : '0 records';
+    return `<div class="import-history-row" data-id="${b.id}">
+      <span class="import-history-name">${b.filename}</span>
+      <span class="import-history-date">${fmtImportDate(b.imported_at)}</span>
+      <span class="import-history-counts">${countStr}</span>
+      <button class="btn-danger-sm" data-id="${b.id}" data-name="${b.filename}" data-count="${counts.join(', ') || '0 records'}">Delete</button>
+    </div>`;
+  }).join('');
+
+  importHistoryList.querySelectorAll('button[data-id]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id   = btn.dataset.id;
+      const name = btn.dataset.name;
+      const cnt  = btn.dataset.count;
+      if (!confirm(`Delete ${cnt} from "${name}"?\nThis cannot be undone.`)) return;
+      try {
+        const res = await fetch(`/api/imports/${id}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${getToken()}` },
+        });
+        if (!res.ok) throw new Error(await res.text());
+        // Remove row from DOM
+        btn.closest('.import-history-row').remove();
+        if (!importHistoryList.querySelector('.import-history-row')) {
+          importHistoryList.innerHTML = '<p class="import-history-empty">No imports found.</p>';
+        }
+        // Refresh charts
+        window.applyBpRange?.();
+        window.applyWeightRange?.();
+        window.applyStepsRange?.();
+      } catch (err) {
+        alert('Delete failed: ' + err.message);
+      }
+    });
+  });
+}
+
+importHistoryBtn.addEventListener('click', async () => {
+  importHistoryList.innerHTML = '<p class="import-history-empty">Loading…</p>';
+  importHistoryModal.classList.remove('hidden');
+  try {
+    const res = await fetch('/api/imports', {
+      headers: { Authorization: `Bearer ${getToken()}` },
+    });
+    if (!res.ok) throw new Error(await res.text());
+    renderImportHistory(await res.json());
+  } catch (err) {
+    importHistoryList.innerHTML = `<p class="import-history-empty">Error: ${err.message}</p>`;
+  }
+});
+
 // Expose logout globally
 window.logout = logout;

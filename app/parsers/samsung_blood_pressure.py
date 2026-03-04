@@ -25,7 +25,7 @@ def _parse_dt(value: str) -> datetime:
     raise ValueError(f"Cannot parse datetime: {value!r}")
 
 
-def parse(f, filename: str, db: Session, user_id: int) -> ImportResult:
+def parse(f, filename: str, db: Session, user_id: int, import_batch_id: int | None = None) -> ImportResult:
     # index_col=False keeps natural column alignment (no implicit index inference)
     df = pd.read_csv(f, skiprows=1, index_col=False)
     df.columns = [col.rsplit(".", 1)[-1] for col in df.columns]
@@ -63,4 +63,4 @@ def parse(f, filename: str, db: Session, user_id: int) -> ImportResult:
             is not None
         )
 
-    return save_records(db, df, filename, "blood_pressure", row_to_record, exists_check, user_id)
+    return save_records(db, df, filename, "blood_pressure", row_to_record, exists_check, user_id, import_batch_id)
