@@ -61,6 +61,21 @@ header h1 {
 }
 .settings-dropdown.hidden { display: none; }
 
+.settings-section-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: -0.2rem;
+}
+
+.settings-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 0.25rem 0;
+}
+
 .settings-dropdown form {
   display: flex;
   align-items: center;

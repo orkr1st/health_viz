@@ -39,12 +39,23 @@
     <div class="settings-menu">
       <button id="settings-btn" class="btn-link-header" title="Settings">⚙</button>
       <div id="settings-dropdown" class="settings-dropdown hidden">
+        <p class="settings-section-label">Data</p>
         <form id="import-form">
           <label for="import-file">Samsung Health import:</label>
           <input type="file" id="import-file" accept=".zip,.csv" />
           <span id="import-file-name" class="import-file-name">No file selected</span>
           <button type="submit">Import</button>
         </form>
+        <div id="import-status"></div>
+        <button type="button" id="import-history-btn" class="btn-link-settings">Import history…</button>
+        <div class="dedup-section">
+          <button type="button" id="dedup-btn" class="btn-link-settings">Remove duplicates…</button>
+          <p id="dedup-status" class="form-status"></p>
+        </div>
+        <button id="view-log-btn" type="button">View Log</button>
+
+        <hr class="settings-divider" />
+        <p class="settings-section-label">Account</p>
         <div class="settings-avatar-row">
           <label>Profile picture:</label>
           <button type="button" id="change-avatar-btn">Change avatar…</button>
@@ -65,13 +76,6 @@
             <p id="pw-status" class="form-status"></p>
           </div>
         </div>
-        <button id="view-log-btn" type="button">View Log</button>
-        <div class="dedup-section">
-          <button type="button" id="dedup-btn" class="btn-link-settings">Remove duplicates…</button>
-          <p id="dedup-status" class="form-status"></p>
-        </div>
-        <button type="button" id="import-history-btn" class="btn-link-settings">Import history…</button>
-        <div id="import-status"></div>
       </div>
     </div>
   </header>
