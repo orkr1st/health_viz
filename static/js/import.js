@@ -29,6 +29,24 @@ async function openLog() {
 document.getElementById('modal-view-log').addEventListener('click', openLog);
 document.getElementById('view-log-btn').addEventListener('click', openLog);
 
+// ── Data export ───────────────────────────────────────────────
+document.getElementById('export-btn').addEventListener('click', async () => {
+  const token = getToken();
+  const res = await fetch('/api/export', {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+  if (!res.ok) { alert('Export failed: ' + res.status); return; }
+  const blob = await res.blob();
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const cd   = res.headers.get('Content-Disposition') || '';
+  const match = cd.match(/filename="([^"]+)"/);
+  a.href     = url;
+  a.download = match ? match[1] : 'health_export.zip';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
 // ── Build results view ────────────────────────────────────────
 function escHtml(str) {
   return String(str)
