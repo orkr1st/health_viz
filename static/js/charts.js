@@ -126,15 +126,30 @@ function buildBpChart(records) {
         legend: { position: 'top' },
         annotation: {
           annotations: {
-            refSystolic: {
-              type: 'line', yMin: 120, yMax: 120,
-              borderColor: 'rgba(239,68,68,0.6)', borderWidth: 3, borderDash: [6, 3],
-              label: { display: true, content: '120', position: 'end', color: '#ef4444', backgroundColor: 'rgba(0,0,0,0)', font: { size: 10 } },
+            // Classification zones (systolic-based, per AHA)
+            zoneNormal: {
+              type: 'box', yMin: 0, yMax: 120,
+              backgroundColor: 'rgba(22,163,74,0.07)', borderWidth: 0,
+              label: { display: true, content: 'Normal', position: { x: 'start', y: 'end' }, color: 'rgba(22,163,74,0.6)', backgroundColor: 'rgba(0,0,0,0)', font: { size: 10 } },
             },
-            refDiastolic: {
-              type: 'line', yMin: 80, yMax: 80,
-              borderColor: 'rgba(59,130,246,0.6)', borderWidth: 3, borderDash: [6, 3],
-              label: { display: true, content: '80', position: 'end', color: '#3b82f6', backgroundColor: 'rgba(0,0,0,0)', font: { size: 10 } },
+            zoneElevated: {
+              type: 'box', yMin: 120, yMax: 130,
+              backgroundColor: 'rgba(234,179,8,0.10)', borderWidth: 0,
+              label: { display: true, content: 'Elevated', position: { x: 'start', y: 'center' }, color: 'rgba(161,120,5,0.8)', backgroundColor: 'rgba(0,0,0,0)', font: { size: 10 } },
+            },
+            zoneHigh: {
+              type: 'box', yMin: 130,
+              backgroundColor: 'rgba(239,68,68,0.07)', borderWidth: 0,
+              label: { display: true, content: 'High', position: { x: 'start', y: 'start' }, color: 'rgba(185,28,28,0.7)', backgroundColor: 'rgba(0,0,0,0)', font: { size: 10 } },
+            },
+            // Boundary lines
+            lineSys120: {
+              type: 'line', yMin: 120, yMax: 120,
+              borderColor: 'rgba(234,179,8,0.5)', borderWidth: 1, borderDash: [4, 4],
+            },
+            lineSys130: {
+              type: 'line', yMin: 130, yMax: 130,
+              borderColor: 'rgba(239,68,68,0.5)', borderWidth: 1, borderDash: [4, 4],
             },
           },
         },

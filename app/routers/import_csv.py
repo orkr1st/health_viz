@@ -22,6 +22,8 @@ from app.schemas import ImportResult
 
 router = APIRouter(prefix="/api/import", tags=["import"])
 
+MAX_UPLOAD_BYTES = 2 * 1024 * 1024 * 1024  # 2 GB
+
 # Map filename prefix → parser module
 # Both namespace variants (shealth / health) included for cross-version compatibility
 PARSER_MAP = {
@@ -105,6 +107,8 @@ async def import_data(
 ):
     log = get_import_logger()
     content = await file.read()
+    if len(content) > MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=413, detail="Upload exceeds 2 GB limit")
     filename = file.filename or "upload"
     results: List[ImportResult] = []
 

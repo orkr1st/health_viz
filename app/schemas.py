@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Optional, List
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
 
 
 # Auth
@@ -39,19 +39,19 @@ class WeightGoalUpdate(BaseModel):
 
 # Blood Pressure
 class BloodPressureCreate(BaseModel):
-    systolic: int
-    diastolic: int
-    pulse: Optional[int] = None
+    systolic:    int           = Field(..., ge=40, le=300)
+    diastolic:   int           = Field(..., ge=20, le=200)
+    pulse:       Optional[int] = Field(None, ge=20, le=300)
     measured_at: datetime
-    notes: Optional[str] = None
+    notes:       Optional[str] = None
 
 
 class BloodPressureUpdate(BaseModel):
-    systolic: Optional[int] = None
-    diastolic: Optional[int] = None
-    pulse: Optional[int] = None
+    systolic:    Optional[int]      = Field(None, ge=40, le=300)
+    diastolic:   Optional[int]      = Field(None, ge=20, le=200)
+    pulse:       Optional[int]      = Field(None, ge=20, le=300)
     measured_at: Optional[datetime] = None
-    notes: Optional[str] = None
+    notes:       Optional[str]      = None
 
 
 class BloodPressureRead(BloodPressureCreate):
@@ -63,15 +63,15 @@ class BloodPressureRead(BloodPressureCreate):
 
 # Weight
 class WeightCreate(BaseModel):
-    value_kg: float
+    value_kg:    float         = Field(..., gt=0, le=700)
     measured_at: datetime
-    notes: Optional[str] = None
+    notes:       Optional[str] = None
 
 
 class WeightUpdate(BaseModel):
-    value_kg: Optional[float] = None
+    value_kg:    Optional[float]    = Field(None, gt=0, le=700)
     measured_at: Optional[datetime] = None
-    notes: Optional[str] = None
+    notes:       Optional[str]      = None
 
 
 class WeightRead(WeightCreate):
@@ -83,15 +83,35 @@ class WeightRead(WeightCreate):
 
 # Steps
 class StepsCreate(BaseModel):
-    step_date: str  # YYYY-MM-DD
-    step_count: int
-    distance_m: Optional[float] = None
+    step_date:  str            # validated below
+    step_count: int            = Field(..., ge=0, le=200_000)
+    distance_m: Optional[float] = Field(None, ge=0, le=500_000)
+
+    @field_validator("step_date")
+    @classmethod
+    def validate_step_date(cls, v: str) -> str:
+        try:
+            datetime.strptime(v, "%Y-%m-%d")
+        except ValueError:
+            raise ValueError("step_date must be YYYY-MM-DD")
+        return v
 
 
 class StepsUpdate(BaseModel):
-    step_date: Optional[str] = None
-    step_count: Optional[int] = None
-    distance_m: Optional[float] = None
+    step_date:  Optional[str]   = None
+    step_count: Optional[int]   = Field(None, ge=0, le=200_000)
+    distance_m: Optional[float] = Field(None, ge=0, le=500_000)
+
+    @field_validator("step_date")
+    @classmethod
+    def validate_step_date(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        try:
+            datetime.strptime(v, "%Y-%m-%d")
+        except ValueError:
+            raise ValueError("step_date must be YYYY-MM-DD")
+        return v
 
 
 class StepsRead(StepsCreate):

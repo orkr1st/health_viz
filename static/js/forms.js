@@ -38,11 +38,11 @@ function applyBpRange() {
   const filtered = filterRange(window._bpData, 'measured_at', ranges.bp);
   renderBpTable(filtered);
   buildBpChart(filtered);
-  _updateBpAvg7();
+  _updateBpAvg7(filtered);
 }
 
-function _updateBpAvg7() {
-  const recent7 = (window._bpData || []).slice(0, 7);
+function _updateBpAvg7(filtered) {
+  const recent7 = (filtered || []).slice(0, 7);
   const avgSys = avg(recent7.map(r => r.systolic));
   const avgDia = avg(recent7.map(r => r.diastolic));
   document.getElementById('bp-avg-sys7').textContent = avgSys != null ? avgSys.toFixed(0) : '—';
