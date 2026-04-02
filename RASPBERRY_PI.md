@@ -17,7 +17,7 @@ newgrp docker
 From your dev machine (replace `pi-host` with hostname or IP):
 
 ```bash
-rsync -av --exclude='health.db' --exclude='logs/' --exclude='__pycache__' --exclude='certs/' \
+rsync -av --exclude='health.db' --exclude='logs/' --exclude='__pycache__' --exclude='certs/' --exclude='static/avatars/' \
   Dockerfile requirements.txt docker-compose.yml env.example app/ static/ \
   pi@pi-host:~/health/
 ```
@@ -116,7 +116,7 @@ docker compose up -d
 ## Verify
 
 ```bash
-curl -k https://localhost:8443/api/auth/me   # expect: 401 Unauthorized
+curl -k https://localhost:8443/api/v1/auth/me   # expect: 401 Unauthorized
 ```
 
 Open `https://<pi-ip>:8443` in a browser — the login screen should appear.

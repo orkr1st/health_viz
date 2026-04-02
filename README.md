@@ -1,6 +1,6 @@
 # Health Tracker
 
-A self-hosted personal health tracking web application. Track blood pressure, body weight, training sessions, and daily steps. Import historical data directly from a Samsung Health export.
+A self-hosted personal health tracking web application. Track blood pressure, body weight, and daily steps. Import historical data directly from a Samsung Health export.
 
 ## Requirements
 
@@ -34,12 +34,13 @@ Supported data types imported from the ZIP:
 
 | Metric | Samsung CSV prefix |
 |---|---|
-| Blood pressure | `com.samsung.shealth.blood_pressure` |
-| Body weight | `com.samsung.health.weight` |
-| Exercise sessions | `com.samsung.shealth.exercise.2` |
-| Daily steps | `com.samsung.shealth.step_daily_trend` |
+| Blood pressure | `com.samsung.shealth.blood_pressure` / `com.samsung.health.blood_pressure` |
+| Body weight | `com.samsung.health.weight` / `com.samsung.shealth.weight` |
+| Daily steps | `com.samsung.shealth.step_daily_trend` / `com.samsung.health.step_daily_trend` |
 
-After import, a detailed result modal shows inserted/skipped/error counts per file. Full import logs are written to `logs/import.log` and viewable via **View Log** in the modal.
+Plain CSV files are also accepted if the header contains the right column names (`systolic`+`diastolic`, `value_kg`, or `step_count`+`step_date`).
+
+After import, a detailed result modal shows inserted/skipped/error counts per file. The **View Log** button in the modal shows the last 200 imports for your account.
 
 ## Data Storage
 
@@ -47,4 +48,4 @@ All data is stored locally in `health.db` (SQLite). No external services or acco
 
 ## API
 
-The REST API is available at `http://localhost:8443/api/` and auto-documented at `http://localhost:8443/docs`.
+The REST API is available at `http://localhost:8443/api/v1/` and auto-documented at `http://localhost:8443/docs`.
