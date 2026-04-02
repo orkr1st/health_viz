@@ -1,10 +1,11 @@
 import io
+import time
 import uuid
 import zipfile
 from typing import List
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile
-from fastapi.responses import PlainTextResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 from sqlalchemy.orm import Session
 
 from app import models
@@ -24,9 +25,18 @@ router = APIRouter(prefix="/api/v1/import", tags=["import"])
 
 MAX_UPLOAD_BYTES = 2 * 1024 * 1024 * 1024  # 2 GB
 ASYNC_THRESHOLD  = 5 * 1024 * 1024          # 5 MB — files above this are processed async
+JOB_TTL          = 3600                     # evict completed/errored jobs after 1 hour
 
-# In-process job store: {job_id: {"status": str, "results": list|None, "error": str|None, "user_id": int}}
+# In-process job store: {job_id: {"status": str, "results": list|None, "error": str|None, "user_id": int, "created_at": float}}
 _jobs: dict = {}
+
+
+def _evict_old_jobs() -> None:
+    """Remove jobs older than JOB_TTL seconds to prevent unbounded growth."""
+    cutoff = time.time() - JOB_TTL
+    expired = [jid for jid, j in _jobs.items() if j.get("created_at", 0) < cutoff]
+    for jid in expired:
+        del _jobs[jid]
 
 # Map filename prefix → parser module
 # Both namespace variants (shealth / health) included for cross-version compatibility
@@ -168,23 +178,22 @@ def _run_import_job(job_id: str, content: bytes, filename: str, user_id: int) ->
         db.close()
 
 
-@router.post("", response_model=List[ImportResult], status_code=200)
+@router.post("")
 async def import_data(
     background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
-    from fastapi.responses import JSONResponse
-
     content = await file.read()
     if len(content) > MAX_UPLOAD_BYTES:
         raise HTTPException(status_code=413, detail="Upload exceeds 2 GB limit")
     filename = file.filename or "upload"
 
     if len(content) > ASYNC_THRESHOLD:
+        _evict_old_jobs()
         job_id = str(uuid.uuid4())
-        _jobs[job_id] = {"status": "pending", "results": None, "error": None, "user_id": current_user.id}
+        _jobs[job_id] = {"status": "pending", "results": None, "error": None, "user_id": current_user.id, "created_at": time.time()}
         background_tasks.add_task(_run_import_job, job_id, content, filename, current_user.id)
         return JSONResponse(status_code=202, content={"job_id": job_id})
 

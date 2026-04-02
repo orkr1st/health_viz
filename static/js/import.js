@@ -2,13 +2,20 @@
 const modal     = document.getElementById('import-modal');
 const modalBody = document.getElementById('modal-body');
 
+let _activePoll = null;
+
+function _cancelPoll() {
+  if (_activePoll !== null) { clearInterval(_activePoll); _activePoll = null; }
+}
+
 function openModal() { modal.classList.remove('hidden'); }
-function closeModal() { modal.classList.add('hidden'); }
+function closeModal() { modal.classList.add('hidden'); _cancelPoll(); }
 
 document.getElementById('modal-close').addEventListener('click', closeModal);
 document.getElementById('modal-close-btn').addEventListener('click', closeModal);
 modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+window.addEventListener('beforeunload', _cancelPoll);
 
 // ── Log viewer ────────────────────────────────────────────────
 async function openLog() {
@@ -93,17 +100,17 @@ function printReport() {
   th, td { border: 1px solid #ddd; padding: 4px 8px; text-align: left; }
   th { background: #f4f4f4; font-weight: 600; }
   tr.bp-normal   { background: rgba(22,163,74,0.08); }
-  tr.bp-elevated { background: rgba(234,179,8,0.15); }
-  tr.bp-high1    { background: rgba(249,115,22,0.15); }
-  tr.bp-high2    { background: rgba(239,68,68,0.15); }
+  tr.bp-elevated { background: rgba(234,179,8,0.12); }
+  tr.bp-high1    { background: rgba(249,115,22,0.12); }
+  tr.bp-high2    { background: rgba(239,68,68,0.12); }
   tr.bp-crisis   { background: rgba(185,28,28,0.22); }
   tr.wt-ok   { background: rgba(22,163,74,0.08); }
-  tr.wt-warn { background: rgba(234,179,8,0.15); }
-  tr.wt-over { background: rgba(239,68,68,0.15); }
+  tr.wt-warn { background: rgba(234,179,8,0.12); }
+  tr.wt-over { background: rgba(239,68,68,0.12); }
   tr.steps-great { background: rgba(22,163,74,0.08); }
   tr.steps-good  { background: rgba(132,204,22,0.12); }
-  tr.steps-ok    { background: rgba(234,179,8,0.15); }
-  tr.steps-low   { background: rgba(239,68,68,0.12); }
+  tr.steps-ok    { background: rgba(234,179,8,0.12); }
+  tr.steps-low   { background: rgba(239,68,68,0.10); }
   @media print { body { padding: 0; } }
 </style></head><body>
 <h1>Health Report</h1>
@@ -177,6 +184,29 @@ document.getElementById('import-file').addEventListener('change', (e) => {
   document.getElementById('settings-dropdown').classList.remove('hidden');
 });
 
+// ── Import helpers (shared between submit handler and poll) ───
+function _setModalError(msg) {
+  const p = document.createElement('p');
+  p.style.color = 'var(--danger)';
+  p.textContent = msg;
+  modalBody.replaceChildren(p);
+}
+
+function _finishImport(results) {
+  const statusEl     = document.getElementById('import-status');
+  const fileInput    = document.getElementById('import-file');
+  const totalInserted = results.reduce((s, r) => s + r.inserted, 0);
+  const totalErrors   = results.reduce((s, r) => s + r.errors,   0);
+  statusEl.textContent = `+${totalInserted} inserted, ${totalErrors} errors`;
+  statusEl.className   = totalErrors > 0 ? 'error' : 'success';
+  setTimeout(() => { statusEl.textContent = ''; statusEl.className = ''; }, 6000);
+  modalBody.innerHTML = buildResultsHtml(results);
+  const activeTab = document.querySelector('.tab-btn.active')?.dataset.tab;
+  if (activeTab) window.dispatchEvent(new CustomEvent('tabchange', { detail: activeTab }));
+  fileInput.value = '';
+  document.getElementById('import-file-name').textContent = 'No file selected';
+}
+
 // ── Form submit ───────────────────────────────────────────────
 document.getElementById('import-form').addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -196,26 +226,6 @@ document.getElementById('import-form').addEventListener('submit', async (e) => {
   const formData = new FormData();
   formData.append('file', file);
 
-  function _setModalError(msg) {
-    const p = document.createElement('p');
-    p.style.color = 'var(--danger)';
-    p.textContent = msg;
-    modalBody.replaceChildren(p);
-  }
-
-  function _finishImport(results) {
-    const totalInserted = results.reduce((s, r) => s + r.inserted, 0);
-    const totalErrors   = results.reduce((s, r) => s + r.errors,   0);
-    statusEl.textContent = `+${totalInserted} inserted, ${totalErrors} errors`;
-    statusEl.className   = totalErrors > 0 ? 'error' : 'success';
-    setTimeout(() => { statusEl.textContent = ''; statusEl.className = ''; }, 6000);
-    modalBody.innerHTML = buildResultsHtml(results);
-    const activeTab = document.querySelector('.tab-btn.active')?.dataset.tab;
-    if (activeTab) window.dispatchEvent(new CustomEvent('tabchange', { detail: activeTab }));
-    fileInput.value = '';
-    document.getElementById('import-file-name').textContent = 'No file selected';
-  }
-
   try {
     const token = localStorage.getItem('health_token');
     const res = await fetch('/api/v1/import', {
@@ -232,23 +242,23 @@ document.getElementById('import-form').addEventListener('submit', async (e) => {
       p.textContent = 'Processing\u2026 please wait.';
       modalBody.replaceChildren(p);
       openModal();
-      const poll = setInterval(async () => {
+      _activePoll = setInterval(async () => {
         try {
           const sr = await fetch(`/api/v1/import/status/${job_id}`, {
             headers: token ? { Authorization: `Bearer ${token}` } : {},
           });
-          if (!sr.ok) { clearInterval(poll); return; }
+          if (!sr.ok) { _cancelPoll(); return; }
           const job = await sr.json();
           if (job.status === 'done') {
-            clearInterval(poll);
+            _cancelPoll();
             _finishImport(job.results);
           } else if (job.status === 'error') {
-            clearInterval(poll);
+            _cancelPoll();
             statusEl.textContent = 'Import failed: ' + (job.error || 'unknown error');
             statusEl.className   = 'error';
             _setModalError(job.error || 'Unknown error');
           }
-        } catch { clearInterval(poll); }
+        } catch { _cancelPoll(); }
       }, 2000);
       return;
     }

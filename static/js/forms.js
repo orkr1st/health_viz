@@ -18,6 +18,7 @@ function makeDeleteBtn(endpoint, id, onDelete) {
 }
 
 // ── Row colour classification helpers ────────────────────────
+/** Returns a CSS class name based on AHA blood pressure zones. */
 function getBpClass(sys, dia) {
   if (sys >= 180 || dia >= 120) return 'bp-crisis';
   if (sys >= 140 || dia >= 90)  return 'bp-high2';
@@ -26,6 +27,7 @@ function getBpClass(sys, dia) {
   return 'bp-normal';
 }
 
+/** Returns a CSS class name based on weight relative to the user's goal (window._weightGoal). */
 function getWeightClass(kg) {
   const goal = window._weightGoal;
   if (!goal) return '';
@@ -34,6 +36,7 @@ function getWeightClass(kg) {
   return 'wt-over';
 }
 
+/** Returns a CSS class name based on daily step-count thresholds. */
 function getStepsClass(count) {
   if (count >= 10000) return 'steps-great';
   if (count >= 7500)  return 'steps-good';
@@ -235,12 +238,9 @@ function renderStepsTable(records) {
     const distKm = r.distance_m != null ? (r.distance_m / 1000).toFixed(2) + ' km' : '—';
     const tr = document.createElement('tr');
     tr.className = getStepsClass(r.step_count);
-    ['step_date', 'step_count', 'distance_m', 'notes', ''].forEach((field, i) => {
+    [r.step_date, r.step_count.toLocaleString(), distKm, r.notes ?? '', ''].forEach((val, i) => {
       const td = document.createElement('td');
-      if (i === 0) td.textContent = r.step_date;
-      else if (i === 1) td.textContent = r.step_count.toLocaleString();
-      else if (i === 2) td.textContent = distKm;
-      else if (i === 3) td.textContent = r.notes ?? '';
+      if (i < 4) td.textContent = val;
       tr.appendChild(td);
     });
     tr.lastElementChild.appendChild(makeDeleteBtn('/api/v1/steps', r.id, loadStepsData));

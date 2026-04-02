@@ -86,7 +86,7 @@ class StepsCreate(BaseModel):
     step_date:  str            # validated below
     step_count: int            = Field(..., ge=0, le=200_000)
     distance_m: Optional[float] = Field(None, ge=0, le=500_000)
-    notes:      Optional[str]  = None
+    notes:      Optional[str]  = Field(None)
 
     @field_validator("step_date")
     @classmethod
@@ -102,7 +102,7 @@ class StepsUpdate(BaseModel):
     step_date:  Optional[str]   = None
     step_count: Optional[int]   = Field(None, ge=0, le=200_000)
     distance_m: Optional[float] = Field(None, ge=0, le=500_000)
-    notes:      Optional[str]   = None
+    notes:      Optional[str]   = Field(None)
 
     @field_validator("step_date")
     @classmethod
@@ -151,3 +151,5 @@ class ImportJobStatus(BaseModel):
     status: str   # pending | running | done | error
     results: Optional[List[ImportResult]] = None
     error: Optional[str] = None
+
+    model_config = {"from_attributes": True}
