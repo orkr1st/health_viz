@@ -1,5 +1,8 @@
 # Personal health data — NEVER commit
 health.db
+
+# User-uploaded content
+static/avatars/
 temp/
 
 # TLS certificates — private keys must never be committed
