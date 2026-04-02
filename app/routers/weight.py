@@ -5,7 +5,7 @@ from app.auth import get_current_user
 from app.database import get_db
 from app import models, schemas
 
-router = APIRouter(prefix="/api/weight", tags=["weight"])
+router = APIRouter(prefix="/api/v1/weight", tags=["weight"])
 
 
 @router.get("", response_model=List[schemas.WeightRead])

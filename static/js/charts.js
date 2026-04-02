@@ -90,9 +90,9 @@ function buildDashStepsChart(records) {
 
 async function loadDashboard() {
   const [bpData, weightData, stepsData] = await Promise.all([
-    apiGet('/api/blood-pressure'),
-    apiGet('/api/weight'),
-    apiGet('/api/steps'),
+    apiGet('/api/v1/blood-pressure'),
+    apiGet('/api/v1/weight'),
+    apiGet('/api/v1/steps'),
   ]);
   buildDashBpChart(bpData);
   buildDashWeightChart(weightData);

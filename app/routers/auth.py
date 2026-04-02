@@ -8,7 +8,7 @@ from app import models, schemas
 from app.auth import create_access_token, get_current_user, get_password_hash, verify_password
 from app.database import get_db
 
-router = APIRouter(prefix="/api/auth", tags=["auth"])
+router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 
 
 @router.post("/register", response_model=schemas.UserRead, status_code=201)

@@ -66,7 +66,7 @@ submitBtn.addEventListener('click', async () => {
 
   try {
     if (isRegisterMode) {
-      const res = await fetch('/api/auth/register', {
+      const res = await fetch('/api/v1/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
@@ -79,7 +79,7 @@ submitBtn.addEventListener('click', async () => {
     }
     // Login (runs for both register-then-login and direct login)
     const form = new URLSearchParams({ username, password });
-    const tokenRes = await fetch('/api/auth/token', {
+    const tokenRes = await fetch('/api/v1/auth/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: form.toString(),
@@ -91,7 +91,7 @@ submitBtn.addEventListener('click', async () => {
     }
     const { access_token } = await tokenRes.json();
     setToken(access_token);
-    const meRes = await fetch('/api/auth/me', {
+    const meRes = await fetch('/api/v1/auth/me', {
       headers: { Authorization: `Bearer ${access_token}` },
     });
     const meUser = meRes.ok ? await meRes.json() : { username, avatar_url: null };
@@ -131,7 +131,7 @@ logoutBtn.addEventListener('click', logout);
     return;
   }
   try {
-    const res = await fetch('/api/auth/me', {
+    const res = await fetch('/api/v1/auth/me', {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!res.ok) {
@@ -162,7 +162,7 @@ document.getElementById('avatar-file-input').addEventListener('change', async (e
   if (!file) return;
   const fd = new FormData();
   fd.append('file', file);
-  const res = await fetch('/api/auth/avatar', {
+  const res = await fetch('/api/v1/auth/avatar', {
     method: 'POST',
     headers: { Authorization: `Bearer ${getToken()}` },
     body: fd,
@@ -206,7 +206,7 @@ document.getElementById('pw-submit-btn').addEventListener('click', async () => {
     return;
   }
 
-  const res = await fetch('/api/auth/change-password', {
+  const res = await fetch('/api/v1/auth/change-password', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -289,7 +289,7 @@ dedupBtn.addEventListener('click', async () => {
   dedupStatus.textContent = 'Scanning…';
   dedupStatus.className = 'form-status';
   try {
-    const res = await fetch('/api/deduplicate', {
+    const res = await fetch('/api/v1/deduplicate', {
       headers: { Authorization: `Bearer ${getToken()}` },
     });
     if (!res.ok) throw new Error(await res.text());
@@ -311,7 +311,7 @@ dedupBtn.addEventListener('click', async () => {
 dedupConfirm.addEventListener('click', async () => {
   dedupConfirm.disabled = true;
   try {
-    const res = await fetch('/api/deduplicate', {
+    const res = await fetch('/api/v1/deduplicate', {
       method: 'POST',
       headers: { Authorization: `Bearer ${getToken()}` },
     });
@@ -372,7 +372,7 @@ function renderImportHistory(batches) {
       const cnt  = btn.dataset.count;
       if (!confirm(`Delete ${cnt} from "${name}"?\nThis cannot be undone.`)) return;
       try {
-        const res = await fetch(`/api/imports/${id}`, {
+        const res = await fetch(`/api/v1/imports/${id}`, {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${getToken()}` },
         });
@@ -397,7 +397,7 @@ importHistoryBtn.addEventListener('click', async () => {
   importHistoryList.innerHTML = '<p class="import-history-empty">Loading…</p>';
   importHistoryModal.classList.remove('hidden');
   try {
-    const res = await fetch('/api/imports', {
+    const res = await fetch('/api/v1/imports', {
       headers: { Authorization: `Bearer ${getToken()}` },
     });
     if (!res.ok) throw new Error(await res.text());

@@ -53,6 +53,7 @@
           <p id="dedup-status" class="form-status"></p>
         </div>
         <button type="button" id="export-btn" class="btn-link-settings">Export data…</button>
+        <button type="button" id="print-report-btn" class="btn-link-settings">Print report…</button>
         <button id="view-log-btn" type="button">View Log</button>
 
         <hr class="settings-divider" />
@@ -260,6 +261,9 @@
             <label>Distance (km)
               <input type="number" name="distance_km" step="0.01" min="0" />
             </label>
+            <label>Notes
+              <textarea name="notes" rows="2"></textarea>
+            </label>
             <button type="submit">Save</button>
           </form>
           <div id="steps-form-status" class="form-status"></div>
@@ -268,7 +272,7 @@
       <div class="table-area">
         <table id="steps-table">
           <thead>
-            <tr><th>Date</th><th>Steps</th><th>Distance</th><th></th></tr>
+            <tr><th>Date</th><th>Steps</th><th>Distance</th><th>Notes</th><th></th></tr>
           </thead>
           <tbody></tbody>
         </table>

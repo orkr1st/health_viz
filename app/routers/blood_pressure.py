@@ -5,7 +5,7 @@ from app.auth import get_current_user
 from app.database import get_db
 from app import models, schemas
 
-router = APIRouter(prefix="/api/blood-pressure", tags=["blood-pressure"])
+router = APIRouter(prefix="/api/v1/blood-pressure", tags=["blood-pressure"])
 
 
 @router.get("", response_model=List[schemas.BloodPressureRead])

@@ -571,3 +571,34 @@ tr:hover td { background: #f5f0eb; }
   font-weight: 600;
   font-size: 0.9rem;
 }
+
+/* ── Row colour coding ──────────────────────────────────────── */
+/* Blood pressure — AHA classification */
+tr.bp-normal   { background: rgba(22,163,74,0.08); }
+tr.bp-elevated { background: rgba(234,179,8,0.12); }
+tr.bp-high1    { background: rgba(249,115,22,0.12); }
+tr.bp-high2    { background: rgba(239,68,68,0.12); }
+tr.bp-crisis   { background: rgba(185,28,28,0.20); }
+tr.bp-normal:hover   { background: rgba(22,163,74,0.16); }
+tr.bp-elevated:hover { background: rgba(234,179,8,0.22); }
+tr.bp-high1:hover    { background: rgba(249,115,22,0.22); }
+tr.bp-high2:hover    { background: rgba(239,68,68,0.22); }
+tr.bp-crisis:hover   { background: rgba(185,28,28,0.30); }
+
+/* Weight — vs goal */
+tr.wt-ok   { background: rgba(22,163,74,0.08); }
+tr.wt-warn { background: rgba(234,179,8,0.12); }
+tr.wt-over { background: rgba(239,68,68,0.12); }
+tr.wt-ok:hover   { background: rgba(22,163,74,0.16); }
+tr.wt-warn:hover { background: rgba(234,179,8,0.22); }
+tr.wt-over:hover { background: rgba(239,68,68,0.22); }
+
+/* Steps — daily count thresholds */
+tr.steps-great { background: rgba(22,163,74,0.08); }
+tr.steps-good  { background: rgba(132,204,22,0.10); }
+tr.steps-ok    { background: rgba(234,179,8,0.12); }
+tr.steps-low   { background: rgba(239,68,68,0.10); }
+tr.steps-great:hover { background: rgba(22,163,74,0.16); }
+tr.steps-good:hover  { background: rgba(132,204,22,0.18); }
+tr.steps-ok:hover    { background: rgba(234,179,8,0.22); }
+tr.steps-low:hover   { background: rgba(239,68,68,0.18); }

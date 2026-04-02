@@ -66,6 +66,7 @@ class Steps(Base):
     step_date: Mapped[str] = mapped_column(String(10), nullable=False)  # YYYY-MM-DD
     step_count: Mapped[int] = mapped_column(Integer, nullable=False)
     distance_m: Mapped[float | None] = mapped_column(Float, nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
     import_batch_id: Mapped[int | None] = mapped_column(Integer, ForeignKey("import_batch.id"), nullable=True)
 

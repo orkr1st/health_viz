@@ -13,33 +13,33 @@ STEPS_CSV = TEST_DIR / "com.samsung.shealth.step_daily_trend.test.csv"
 
 class TestAuth:
     def test_register(self, client):
-        resp = client.post("/api/auth/register", json={"username": "newuser", "password": "pass"})
+        resp = client.post("/api/v1/auth/register", json={"username": "newuser", "password": "pass"})
         assert resp.status_code == 201
         assert resp.json()["username"] == "newuser"
 
     def test_register_duplicate(self, client):
-        client.post("/api/auth/register", json={"username": "dup", "password": "pass"})
-        resp = client.post("/api/auth/register", json={"username": "dup", "password": "pass"})
+        client.post("/api/v1/auth/register", json={"username": "dup", "password": "pass"})
+        resp = client.post("/api/v1/auth/register", json={"username": "dup", "password": "pass"})
         assert resp.status_code == 400
 
     def test_login_success(self, client):
-        client.post("/api/auth/register", json={"username": "loginuser", "password": "secret"})
-        resp = client.post("/api/auth/token", data={"username": "loginuser", "password": "secret"})
+        client.post("/api/v1/auth/register", json={"username": "loginuser", "password": "secret"})
+        resp = client.post("/api/v1/auth/token", data={"username": "loginuser", "password": "secret"})
         assert resp.status_code == 200
         assert "access_token" in resp.json()
 
     def test_login_wrong_password(self, client):
-        client.post("/api/auth/register", json={"username": "wrongpw", "password": "correct"})
-        resp = client.post("/api/auth/token", data={"username": "wrongpw", "password": "wrong"})
+        client.post("/api/v1/auth/register", json={"username": "wrongpw", "password": "correct"})
+        resp = client.post("/api/v1/auth/token", data={"username": "wrongpw", "password": "wrong"})
         assert resp.status_code == 401
 
     def test_me_with_token(self, client, auth):
-        resp = client.get("/api/auth/me", headers=auth)
+        resp = client.get("/api/v1/auth/me", headers=auth)
         assert resp.status_code == 200
         assert resp.json()["username"] == "tester"
 
     def test_me_without_token(self, client):
-        resp = client.get("/api/auth/me")
+        resp = client.get("/api/v1/auth/me")
         assert resp.status_code == 401
 
 
@@ -48,7 +48,7 @@ class TestAuth:
 class TestBloodPressureCrud:
     def _create(self, client, auth):
         return client.post(
-            "/api/blood-pressure",
+            "/api/v1/blood-pressure",
             json={"systolic": 120, "diastolic": 80, "pulse": 70, "measured_at": "2024-01-01T10:00:00"},
             headers=auth,
         )
@@ -63,40 +63,40 @@ class TestBloodPressureCrud:
 
     def test_list(self, client, auth):
         self._create(client, auth)
-        resp = client.get("/api/blood-pressure", headers=auth)
+        resp = client.get("/api/v1/blood-pressure", headers=auth)
         assert resp.status_code == 200
         assert len(resp.json()) >= 1
 
     def test_get_by_id(self, client, auth):
         record_id = self._create(client, auth).json()["id"]
-        resp = client.get(f"/api/blood-pressure/{record_id}", headers=auth)
+        resp = client.get(f"/api/v1/blood-pressure/{record_id}", headers=auth)
         assert resp.status_code == 200
         assert resp.json()["id"] == record_id
 
     def test_update(self, client, auth):
         record_id = self._create(client, auth).json()["id"]
-        resp = client.put(f"/api/blood-pressure/{record_id}", json={"pulse": 65}, headers=auth)
+        resp = client.put(f"/api/v1/blood-pressure/{record_id}", json={"pulse": 65}, headers=auth)
         assert resp.status_code == 200
         assert resp.json()["pulse"] == 65
 
     def test_delete(self, client, auth):
         record_id = self._create(client, auth).json()["id"]
-        resp = client.delete(f"/api/blood-pressure/{record_id}", headers=auth)
+        resp = client.delete(f"/api/v1/blood-pressure/{record_id}", headers=auth)
         assert resp.status_code == 204
 
     def test_get_deleted_returns_404(self, client, auth):
         record_id = self._create(client, auth).json()["id"]
-        client.delete(f"/api/blood-pressure/{record_id}", headers=auth)
-        resp = client.get(f"/api/blood-pressure/{record_id}", headers=auth)
+        client.delete(f"/api/v1/blood-pressure/{record_id}", headers=auth)
+        resp = client.get(f"/api/v1/blood-pressure/{record_id}", headers=auth)
         assert resp.status_code == 404
 
     def test_user_isolation(self, client, auth):
         record_id = self._create(client, auth).json()["id"]
         # Second user cannot access first user's record
-        client.post("/api/auth/register", json={"username": "other_bp", "password": "pw"})
-        r2 = client.post("/api/auth/token", data={"username": "other_bp", "password": "pw"})
+        client.post("/api/v1/auth/register", json={"username": "other_bp", "password": "pw"})
+        r2 = client.post("/api/v1/auth/token", data={"username": "other_bp", "password": "pw"})
         other_auth = {"Authorization": f"Bearer {r2.json()['access_token']}"}
-        resp = client.get(f"/api/blood-pressure/{record_id}", headers=other_auth)
+        resp = client.get(f"/api/v1/blood-pressure/{record_id}", headers=other_auth)
         assert resp.status_code == 404
 
 
@@ -105,7 +105,7 @@ class TestBloodPressureCrud:
 class TestWeightCrud:
     def _create(self, client, auth):
         return client.post(
-            "/api/weight",
+            "/api/v1/weight",
             json={"value_kg": 75.5, "measured_at": "2024-01-01T08:00:00"},
             headers=auth,
         )
@@ -117,39 +117,39 @@ class TestWeightCrud:
 
     def test_list(self, client, auth):
         self._create(client, auth)
-        resp = client.get("/api/weight", headers=auth)
+        resp = client.get("/api/v1/weight", headers=auth)
         assert resp.status_code == 200
         assert len(resp.json()) >= 1
 
     def test_get_by_id(self, client, auth):
         record_id = self._create(client, auth).json()["id"]
-        resp = client.get(f"/api/weight/{record_id}", headers=auth)
+        resp = client.get(f"/api/v1/weight/{record_id}", headers=auth)
         assert resp.status_code == 200
         assert resp.json()["id"] == record_id
 
     def test_update(self, client, auth):
         record_id = self._create(client, auth).json()["id"]
-        resp = client.put(f"/api/weight/{record_id}", json={"value_kg": 74.0}, headers=auth)
+        resp = client.put(f"/api/v1/weight/{record_id}", json={"value_kg": 74.0}, headers=auth)
         assert resp.status_code == 200
         assert resp.json()["value_kg"] == pytest.approx(74.0)
 
     def test_delete(self, client, auth):
         record_id = self._create(client, auth).json()["id"]
-        resp = client.delete(f"/api/weight/{record_id}", headers=auth)
+        resp = client.delete(f"/api/v1/weight/{record_id}", headers=auth)
         assert resp.status_code == 204
 
     def test_get_deleted_returns_404(self, client, auth):
         record_id = self._create(client, auth).json()["id"]
-        client.delete(f"/api/weight/{record_id}", headers=auth)
-        resp = client.get(f"/api/weight/{record_id}", headers=auth)
+        client.delete(f"/api/v1/weight/{record_id}", headers=auth)
+        resp = client.get(f"/api/v1/weight/{record_id}", headers=auth)
         assert resp.status_code == 404
 
     def test_user_isolation(self, client, auth):
         record_id = self._create(client, auth).json()["id"]
-        client.post("/api/auth/register", json={"username": "other_w", "password": "pw"})
-        r2 = client.post("/api/auth/token", data={"username": "other_w", "password": "pw"})
+        client.post("/api/v1/auth/register", json={"username": "other_w", "password": "pw"})
+        r2 = client.post("/api/v1/auth/token", data={"username": "other_w", "password": "pw"})
         other_auth = {"Authorization": f"Bearer {r2.json()['access_token']}"}
-        resp = client.get(f"/api/weight/{record_id}", headers=other_auth)
+        resp = client.get(f"/api/v1/weight/{record_id}", headers=other_auth)
         assert resp.status_code == 404
 
 
@@ -158,7 +158,7 @@ class TestWeightCrud:
 class TestStepsCrud:
     def _create(self, client, auth):
         return client.post(
-            "/api/steps",
+            "/api/v1/steps",
             json={"step_date": "2024-01-01", "step_count": 8000, "distance_m": 6000.0},
             headers=auth,
         )
@@ -170,39 +170,39 @@ class TestStepsCrud:
 
     def test_list(self, client, auth):
         self._create(client, auth)
-        resp = client.get("/api/steps", headers=auth)
+        resp = client.get("/api/v1/steps", headers=auth)
         assert resp.status_code == 200
         assert len(resp.json()) >= 1
 
     def test_get_by_id(self, client, auth):
         record_id = self._create(client, auth).json()["id"]
-        resp = client.get(f"/api/steps/{record_id}", headers=auth)
+        resp = client.get(f"/api/v1/steps/{record_id}", headers=auth)
         assert resp.status_code == 200
         assert resp.json()["id"] == record_id
 
     def test_update(self, client, auth):
         record_id = self._create(client, auth).json()["id"]
-        resp = client.put(f"/api/steps/{record_id}", json={"step_count": 9000}, headers=auth)
+        resp = client.put(f"/api/v1/steps/{record_id}", json={"step_count": 9000}, headers=auth)
         assert resp.status_code == 200
         assert resp.json()["step_count"] == 9000
 
     def test_delete(self, client, auth):
         record_id = self._create(client, auth).json()["id"]
-        resp = client.delete(f"/api/steps/{record_id}", headers=auth)
+        resp = client.delete(f"/api/v1/steps/{record_id}", headers=auth)
         assert resp.status_code == 204
 
     def test_get_deleted_returns_404(self, client, auth):
         record_id = self._create(client, auth).json()["id"]
-        client.delete(f"/api/steps/{record_id}", headers=auth)
-        resp = client.get(f"/api/steps/{record_id}", headers=auth)
+        client.delete(f"/api/v1/steps/{record_id}", headers=auth)
+        resp = client.get(f"/api/v1/steps/{record_id}", headers=auth)
         assert resp.status_code == 404
 
     def test_user_isolation(self, client, auth):
         record_id = self._create(client, auth).json()["id"]
-        client.post("/api/auth/register", json={"username": "other_s", "password": "pw"})
-        r2 = client.post("/api/auth/token", data={"username": "other_s", "password": "pw"})
+        client.post("/api/v1/auth/register", json={"username": "other_s", "password": "pw"})
+        r2 = client.post("/api/v1/auth/token", data={"username": "other_s", "password": "pw"})
         other_auth = {"Authorization": f"Bearer {r2.json()['access_token']}"}
-        resp = client.get(f"/api/steps/{record_id}", headers=other_auth)
+        resp = client.get(f"/api/v1/steps/{record_id}", headers=other_auth)
         assert resp.status_code == 404
 
 
@@ -212,7 +212,7 @@ class TestImport:
     def test_upload_blood_pressure(self, client, auth):
         with open(BP_CSV, "rb") as f:
             resp = client.post(
-                "/api/import",
+                "/api/v1/import",
                 files={"file": (BP_CSV.name, f, "text/csv")},
                 headers=auth,
             )
@@ -226,7 +226,7 @@ class TestImport:
         for _ in range(2):
             with open(BP_CSV, "rb") as f:
                 resp = client.post(
-                    "/api/import",
+                    "/api/v1/import",
                     files={"file": (BP_CSV.name, f, "text/csv")},
                     headers=auth,
                 )
@@ -238,11 +238,11 @@ class TestImport:
     def test_blood_pressure_values_via_get(self, client, auth):
         with open(BP_CSV, "rb") as f:
             client.post(
-                "/api/import",
+                "/api/v1/import",
                 files={"file": (BP_CSV.name, f, "text/csv")},
                 headers=auth,
             )
-        resp = client.get("/api/blood-pressure", headers=auth)
+        resp = client.get("/api/v1/blood-pressure", headers=auth)
         assert resp.status_code == 200
         records = resp.json()
         assert len(records) >= 1
@@ -254,7 +254,7 @@ class TestImport:
     def test_upload_weight(self, client, auth):
         with open(WEIGHT_CSV, "rb") as f:
             resp = client.post(
-                "/api/import",
+                "/api/v1/import",
                 files={"file": (WEIGHT_CSV.name, f, "text/csv")},
                 headers=auth,
             )
@@ -266,11 +266,11 @@ class TestImport:
     def test_weight_values_via_get(self, client, auth):
         with open(WEIGHT_CSV, "rb") as f:
             client.post(
-                "/api/import",
+                "/api/v1/import",
                 files={"file": (WEIGHT_CSV.name, f, "text/csv")},
                 headers=auth,
             )
-        resp = client.get("/api/weight", headers=auth)
+        resp = client.get("/api/v1/weight", headers=auth)
         assert resp.status_code == 200
         records = resp.json()
         assert len(records) >= 1
@@ -279,7 +279,7 @@ class TestImport:
     def test_upload_steps(self, client, auth):
         with open(STEPS_CSV, "rb") as f:
             resp = client.post(
-                "/api/import",
+                "/api/v1/import",
                 files={"file": (STEPS_CSV.name, f, "text/csv")},
                 headers=auth,
             )
@@ -291,11 +291,11 @@ class TestImport:
     def test_steps_values_via_get(self, client, auth):
         with open(STEPS_CSV, "rb") as f:
             client.post(
-                "/api/import",
+                "/api/v1/import",
                 files={"file": (STEPS_CSV.name, f, "text/csv")},
                 headers=auth,
             )
-        resp = client.get("/api/steps", headers=auth)
+        resp = client.get("/api/v1/steps", headers=auth)
         assert resp.status_code == 200
         records = resp.json()
         assert len(records) >= 1
@@ -305,14 +305,14 @@ class TestImport:
 
     def test_upload_unsupported_file(self, client, auth):
         resp = client.post(
-            "/api/import",
+            "/api/v1/import",
             files={"file": ("data.txt", b"hello", "text/plain")},
             headers=auth,
         )
         assert resp.status_code == 400
 
     def test_import_log(self, client, auth):
-        resp = client.get("/api/import/log", headers=auth)
+        resp = client.get("/api/v1/import/log", headers=auth)
         assert resp.status_code == 200
         assert isinstance(resp.text, str)
 
@@ -322,23 +322,23 @@ class TestImport:
 class TestChangePassword:
     def test_success(self, client, auth):
         resp = client.post(
-            "/api/auth/change-password",
+            "/api/v1/auth/change-password",
             json={"current_password": "secret", "new_password": "newpass"},
             headers=auth,
         )
         assert resp.status_code == 200
         # Old password no longer works
         assert client.post(
-            "/api/auth/token", data={"username": "tester", "password": "secret"}
+            "/api/v1/auth/token", data={"username": "tester", "password": "secret"}
         ).status_code == 401
         # New password works
         assert client.post(
-            "/api/auth/token", data={"username": "tester", "password": "newpass"}
+            "/api/v1/auth/token", data={"username": "tester", "password": "newpass"}
         ).status_code == 200
 
     def test_wrong_current_password(self, client, auth):
         resp = client.post(
-            "/api/auth/change-password",
+            "/api/v1/auth/change-password",
             json={"current_password": "wrongpass", "new_password": "newpass"},
             headers=auth,
         )
@@ -346,7 +346,7 @@ class TestChangePassword:
 
     def test_empty_new_password(self, client, auth):
         resp = client.post(
-            "/api/auth/change-password",
+            "/api/v1/auth/change-password",
             json={"current_password": "secret", "new_password": ""},
             headers=auth,
         )
@@ -354,7 +354,7 @@ class TestChangePassword:
 
     def test_requires_auth(self, client):
         resp = client.post(
-            "/api/auth/change-password",
+            "/api/v1/auth/change-password",
             json={"current_password": "secret", "new_password": "newpass"},
         )
         assert resp.status_code == 401
@@ -365,7 +365,7 @@ class TestChangePassword:
 class TestDeduplicate:
     def _bp(self, client, auth, timestamp, systolic=120, diastolic=80, pulse=70):
         return client.post(
-            "/api/blood-pressure",
+            "/api/v1/blood-pressure",
             json={"systolic": systolic, "diastolic": diastolic, "pulse": pulse,
                   "measured_at": timestamp},
             headers=auth,
@@ -373,7 +373,7 @@ class TestDeduplicate:
 
     def _weight(self, client, auth, timestamp, value_kg=75.5):
         return client.post(
-            "/api/weight",
+            "/api/v1/weight",
             json={"value_kg": value_kg, "measured_at": timestamp},
             headers=auth,
         )
@@ -381,7 +381,7 @@ class TestDeduplicate:
     # ── preview (GET) ──────────────────────────────────────────────────────────
 
     def test_preview_empty(self, client, auth):
-        resp = client.get("/api/deduplicate", headers=auth)
+        resp = client.get("/api/v1/deduplicate", headers=auth)
         assert resp.status_code == 200
         data = resp.json()
         assert data["blood_pressure"] == []
@@ -392,74 +392,74 @@ class TestDeduplicate:
         # Same day, same values, different timestamps → duplicate
         self._bp(client, auth, "2024-01-01T10:00:00")
         self._bp(client, auth, "2024-01-01T11:00:00")
-        data = client.get("/api/deduplicate", headers=auth).json()
+        data = client.get("/api/v1/deduplicate", headers=auth).json()
         assert len(data["blood_pressure"]) == 1
 
     def test_preview_does_not_delete(self, client, auth):
         self._bp(client, auth, "2024-01-01T10:00:00")
         self._bp(client, auth, "2024-01-01T11:00:00")
-        client.get("/api/deduplicate", headers=auth)
+        client.get("/api/v1/deduplicate", headers=auth)
         # Both records still present after preview
-        assert len(client.get("/api/blood-pressure", headers=auth).json()) == 2
+        assert len(client.get("/api/v1/blood-pressure", headers=auth).json()) == 2
 
     # ── remove (POST) ──────────────────────────────────────────────────────────
 
     def test_remove_no_dupes_returns_zeros(self, client, auth):
         self._bp(client, auth, "2024-01-01T10:00:00")
-        data = client.post("/api/deduplicate", headers=auth).json()
+        data = client.post("/api/v1/deduplicate", headers=auth).json()
         assert data == {"blood_pressure": 0, "weight": 0, "steps": 0}
 
     def test_remove_bp_duplicates(self, client, auth):
         self._bp(client, auth, "2024-01-01T10:00:00")
         self._bp(client, auth, "2024-01-01T11:00:00")  # duplicate
-        data = client.post("/api/deduplicate", headers=auth).json()
+        data = client.post("/api/v1/deduplicate", headers=auth).json()
         assert data["blood_pressure"] == 1
-        assert len(client.get("/api/blood-pressure", headers=auth).json()) == 1
+        assert len(client.get("/api/v1/blood-pressure", headers=auth).json()) == 1
 
     def test_remove_keeps_earliest_record(self, client, auth):
         first_id = self._bp(client, auth, "2024-01-01T10:00:00").json()["id"]
         self._bp(client, auth, "2024-01-01T11:00:00")
-        client.post("/api/deduplicate", headers=auth)
-        remaining = client.get("/api/blood-pressure", headers=auth).json()
+        client.post("/api/v1/deduplicate", headers=auth)
+        remaining = client.get("/api/v1/blood-pressure", headers=auth).json()
         assert remaining[0]["id"] == first_id
 
     def test_different_values_on_same_day_not_duplicates(self, client, auth):
         self._bp(client, auth, "2024-01-01T10:00:00", systolic=120, diastolic=80)
         self._bp(client, auth, "2024-01-01T11:00:00", systolic=130, diastolic=85)
-        data = client.post("/api/deduplicate", headers=auth).json()
+        data = client.post("/api/v1/deduplicate", headers=auth).json()
         assert data["blood_pressure"] == 0
-        assert len(client.get("/api/blood-pressure", headers=auth).json()) == 2
+        assert len(client.get("/api/v1/blood-pressure", headers=auth).json()) == 2
 
     def test_same_values_different_days_not_duplicates(self, client, auth):
         self._bp(client, auth, "2024-01-01T10:00:00")
         self._bp(client, auth, "2024-01-02T10:00:00")
-        data = client.post("/api/deduplicate", headers=auth).json()
+        data = client.post("/api/v1/deduplicate", headers=auth).json()
         assert data["blood_pressure"] == 0
 
     def test_remove_weight_duplicates(self, client, auth):
         self._weight(client, auth, "2024-01-01T08:00:00")
         self._weight(client, auth, "2024-01-01T09:00:00")  # duplicate
-        data = client.post("/api/deduplicate", headers=auth).json()
+        data = client.post("/api/v1/deduplicate", headers=auth).json()
         assert data["weight"] == 1
-        assert len(client.get("/api/weight", headers=auth).json()) == 1
+        assert len(client.get("/api/v1/weight", headers=auth).json()) == 1
 
     def test_user_isolation(self, client, auth):
         # Tester has a duplicate
         self._bp(client, auth, "2024-01-01T10:00:00")
         self._bp(client, auth, "2024-01-01T11:00:00")
         # Second user has a clean record
-        client.post("/api/auth/register", json={"username": "other_dedup", "password": "pw"})
-        r2 = client.post("/api/auth/token", data={"username": "other_dedup", "password": "pw"})
+        client.post("/api/v1/auth/register", json={"username": "other_dedup", "password": "pw"})
+        r2 = client.post("/api/v1/auth/token", data={"username": "other_dedup", "password": "pw"})
         other_auth = {"Authorization": f"Bearer {r2.json()['access_token']}"}
         self._bp(client, other_auth, "2024-01-01T10:00:00")
         # Deduplicate as tester
-        assert client.post("/api/deduplicate", headers=auth).json()["blood_pressure"] == 1
+        assert client.post("/api/v1/deduplicate", headers=auth).json()["blood_pressure"] == 1
         # Other user's record is untouched
-        assert len(client.get("/api/blood-pressure", headers=other_auth).json()) == 1
+        assert len(client.get("/api/v1/blood-pressure", headers=other_auth).json()) == 1
 
     def test_requires_auth(self, client):
-        assert client.get("/api/deduplicate").status_code == 401
-        assert client.post("/api/deduplicate").status_code == 401
+        assert client.get("/api/v1/deduplicate").status_code == 401
+        assert client.post("/api/v1/deduplicate").status_code == 401
 
 
 # ── Generic CSV import ─────────────────────────────────────────────────────────
@@ -467,7 +467,7 @@ class TestDeduplicate:
 class TestGenericCsvImport:
     def _upload(self, client, auth, filename, content):
         return client.post(
-            "/api/import",
+            "/api/v1/import",
             files={"file": (filename, content, "text/csv")},
             headers=auth,
         )
@@ -486,7 +486,7 @@ class TestGenericCsvImport:
     def test_bp_values_stored_correctly(self, client, auth):
         csv = b"measured_at,systolic,diastolic,pulse,notes\n2024-01-01 10:00:00,120,80,70,rest\n"
         self._upload(client, auth, "bp.csv", csv)
-        records = client.get("/api/blood-pressure", headers=auth).json()
+        records = client.get("/api/v1/blood-pressure", headers=auth).json()
         assert len(records) == 1
         assert records[0]["systolic"] == 120
         assert records[0]["diastolic"] == 80
@@ -506,7 +506,7 @@ class TestGenericCsvImport:
         csv = b"measured_at,systolic,diastolic\n2024-01-01 10:00:00,120,80\n"
         resp = self._upload(client, auth, "bp.csv", csv)
         assert resp.json()[0]["inserted"] == 1
-        record = client.get("/api/blood-pressure", headers=auth).json()[0]
+        record = client.get("/api/v1/blood-pressure", headers=auth).json()[0]
         assert record["pulse"] is None
         assert record["notes"] is None
 
@@ -522,7 +522,7 @@ class TestGenericCsvImport:
     def test_weight_values_stored_correctly(self, client, auth):
         csv = b"measured_at,value_kg,notes\n2024-01-01 08:00:00,75.5,morning\n"
         self._upload(client, auth, "weight.csv", csv)
-        records = client.get("/api/weight", headers=auth).json()
+        records = client.get("/api/v1/weight", headers=auth).json()
         assert records[0]["value_kg"] == pytest.approx(75.5)
         assert records[0]["notes"] == "morning"
 
@@ -546,7 +546,7 @@ class TestGenericCsvImport:
     def test_steps_values_stored_correctly(self, client, auth):
         csv = b"step_date,step_count,distance_m\n2024-01-01,8000,6000.0\n"
         self._upload(client, auth, "steps.csv", csv)
-        records = client.get("/api/steps", headers=auth).json()
+        records = client.get("/api/v1/steps", headers=auth).json()
         assert records[0]["step_count"] == 8000
         assert records[0]["distance_m"] == pytest.approx(6000.0)
 
@@ -562,7 +562,7 @@ class TestGenericCsvImport:
         csv = b"step_date,step_count\n2024-01-01,8000\n"
         resp = self._upload(client, auth, "steps.csv", csv)
         assert resp.json()[0]["inserted"] == 1
-        assert client.get("/api/steps", headers=auth).json()[0]["distance_m"] is None
+        assert client.get("/api/v1/steps", headers=auth).json()[0]["distance_m"] is None
 
     # ── error cases ────────────────────────────────────────────────────────────
 
@@ -579,7 +579,7 @@ class TestGenericCsvImport:
         )
         resp = self._upload(client, auth, "bp.csv", csv)
         assert resp.json()[0]["inserted"] == 2
-        assert len(client.get("/api/blood-pressure", headers=auth).json()) == 2
+        assert len(client.get("/api/v1/blood-pressure", headers=auth).json()) == 2
 
 
 # ── Import history ─────────────────────────────────────────────────────────────
@@ -588,7 +588,7 @@ class TestImportHistory:
     def _upload_bp(self, client, auth):
         with open(BP_CSV, "rb") as f:
             return client.post(
-                "/api/import",
+                "/api/v1/import",
                 files={"file": (BP_CSV.name, f, "text/csv")},
                 headers=auth,
             )
@@ -596,19 +596,19 @@ class TestImportHistory:
     def _upload_weight(self, client, auth):
         with open(WEIGHT_CSV, "rb") as f:
             return client.post(
-                "/api/import",
+                "/api/v1/import",
                 files={"file": (WEIGHT_CSV.name, f, "text/csv")},
                 headers=auth,
             )
 
     def test_empty_history(self, client, auth):
-        resp = client.get("/api/imports", headers=auth)
+        resp = client.get("/api/v1/imports", headers=auth)
         assert resp.status_code == 200
         assert resp.json() == []
 
     def test_bp_import_creates_batch(self, client, auth):
         self._upload_bp(client, auth)
-        resp = client.get("/api/imports", headers=auth)
+        resp = client.get("/api/v1/imports", headers=auth)
         assert resp.status_code == 200
         batches = resp.json()
         assert len(batches) == 1
@@ -620,18 +620,18 @@ class TestImportHistory:
     def test_two_imports_create_two_batches(self, client, auth):
         self._upload_bp(client, auth)
         self._upload_weight(client, auth)
-        batches = client.get("/api/imports", headers=auth).json()
+        batches = client.get("/api/v1/imports", headers=auth).json()
         assert len(batches) == 2
 
     def test_delete_batch_removes_records(self, client, auth):
         self._upload_bp(client, auth)
-        batches = client.get("/api/imports", headers=auth).json()
+        batches = client.get("/api/v1/imports", headers=auth).json()
         batch_id = batches[0]["id"]
 
         # Records exist before delete
-        assert len(client.get("/api/blood-pressure", headers=auth).json()) == 1
+        assert len(client.get("/api/v1/blood-pressure", headers=auth).json()) == 1
 
-        resp = client.delete(f"/api/imports/{batch_id}", headers=auth)
+        resp = client.delete(f"/api/v1/imports/{batch_id}", headers=auth)
         assert resp.status_code == 200
         data = resp.json()
         assert data["deleted_bp"] == 1
@@ -639,34 +639,211 @@ class TestImportHistory:
         assert data["deleted_steps"] == 0
 
         # Records gone after delete
-        assert client.get("/api/blood-pressure", headers=auth).json() == []
+        assert client.get("/api/v1/blood-pressure", headers=auth).json() == []
         # Batch also gone
-        assert client.get("/api/imports", headers=auth).json() == []
+        assert client.get("/api/v1/imports", headers=auth).json() == []
 
     def test_delete_is_user_scoped(self, client, auth):
         # Upload BP for tester
         self._upload_bp(client, auth)
-        batch_id = client.get("/api/imports", headers=auth).json()[0]["id"]
+        batch_id = client.get("/api/v1/imports", headers=auth).json()[0]["id"]
 
         # Second user tries to delete tester's batch
-        client.post("/api/auth/register", json={"username": "other_ih", "password": "pw"})
-        r2 = client.post("/api/auth/token", data={"username": "other_ih", "password": "pw"})
+        client.post("/api/v1/auth/register", json={"username": "other_ih", "password": "pw"})
+        r2 = client.post("/api/v1/auth/token", data={"username": "other_ih", "password": "pw"})
         other_auth = {"Authorization": f"Bearer {r2.json()['access_token']}"}
 
-        resp = client.delete(f"/api/imports/{batch_id}", headers=other_auth)
+        resp = client.delete(f"/api/v1/imports/{batch_id}", headers=other_auth)
         assert resp.status_code == 404
 
         # Tester's records still intact
-        assert len(client.get("/api/blood-pressure", headers=auth).json()) == 1
+        assert len(client.get("/api/v1/blood-pressure", headers=auth).json()) == 1
 
     def test_all_skipped_creates_no_batch(self, client, auth):
         # Import BP CSV twice — second import should create no batch (0 inserted)
         self._upload_bp(client, auth)
         self._upload_bp(client, auth)
-        batches = client.get("/api/imports", headers=auth).json()
+        batches = client.get("/api/v1/imports", headers=auth).json()
         # Only the first import should have a batch
         assert len(batches) == 1
 
     def test_requires_auth(self, client):
-        assert client.get("/api/imports").status_code == 401
-        assert client.delete("/api/imports/1").status_code == 401
+        assert client.get("/api/v1/imports").status_code == 401
+        assert client.delete("/api/v1/imports/1").status_code == 401
+
+
+# ── Export ─────────────────────────────────────────────────────────────────────
+
+class TestExport:
+    def test_requires_auth(self, client):
+        assert client.get("/api/v1/export").status_code == 401
+
+    def test_returns_zip(self, client, auth):
+        resp = client.get("/api/v1/export", headers=auth)
+        assert resp.status_code == 200
+        assert "application/zip" in resp.headers["content-type"]
+
+    def test_contains_three_csvs(self, client, auth):
+        import io, zipfile
+        resp = client.get("/api/v1/export", headers=auth)
+        zf = zipfile.ZipFile(io.BytesIO(resp.content))
+        names = zf.namelist()
+        assert "blood_pressure.csv" in names
+        assert "weight.csv" in names
+        assert "steps.csv" in names
+
+    def test_user_isolation(self, client, auth):
+        import io, zipfile
+        # Create a BP record for the primary user
+        client.post("/api/v1/blood-pressure", headers=auth,
+                    json={"measured_at": "2026-01-01T10:00:00",
+                          "systolic": 120, "diastolic": 80})
+        # Register a second user
+        client.post("/api/v1/auth/register", json={"username": "other_export", "password": "pw"})
+        r2 = client.post("/api/v1/auth/token", data={"username": "other_export", "password": "pw"})
+        auth2 = {"Authorization": f"Bearer {r2.json()['access_token']}"}
+
+        # Export for second user should have empty BP CSV (header only)
+        resp = client.get("/api/v1/export", headers=auth2)
+        zf = zipfile.ZipFile(io.BytesIO(resp.content))
+        bp_lines = zf.read("blood_pressure.csv").decode().strip().splitlines()
+        assert len(bp_lines) == 1  # header only
+
+    def test_bp_csv_includes_notes(self, client, auth):
+        import io, zipfile
+        client.post("/api/v1/blood-pressure", headers=auth,
+                    json={"measured_at": "2026-01-02T09:00:00",
+                          "systolic": 118, "diastolic": 76, "notes": "after rest"})
+        resp = client.get("/api/v1/export", headers=auth)
+        zf = zipfile.ZipFile(io.BytesIO(resp.content))
+        content = zf.read("blood_pressure.csv").decode()
+        assert "after rest" in content
+
+    def test_steps_csv_includes_notes(self, client, auth):
+        import io, zipfile
+        client.post("/api/v1/steps", headers=auth,
+                    json={"step_date": "2026-01-03", "step_count": 8500,
+                          "notes": "rainy walk"})
+        resp = client.get("/api/v1/export", headers=auth)
+        zf = zipfile.ZipFile(io.BytesIO(resp.content))
+        content = zf.read("steps.csv").decode()
+        assert "rainy walk" in content
+
+
+# ── Steps Notes ────────────────────────────────────────────────────────────────
+
+class TestStepsNotes:
+    def _create(self, client, auth, **kwargs):
+        body = {"step_date": "2026-02-01", "step_count": 7000}
+        body.update(kwargs)
+        return client.post("/api/v1/steps", headers=auth, json=body)
+
+    def test_create_with_notes(self, client, auth):
+        resp = self._create(client, auth, notes="morning run")
+        assert resp.status_code == 201
+        data = client.get("/api/v1/steps", headers=auth).json()
+        assert data[0]["notes"] == "morning run"
+
+    def test_update_notes(self, client, auth):
+        r = self._create(client, auth)
+        rid = r.json()["id"]
+        client.put(f"/api/v1/steps/{rid}", headers=auth, json={"notes": "evening"})
+        data = client.get(f"/api/v1/steps/{rid}", headers=auth).json()
+        assert data["notes"] == "evening"
+
+    def test_notes_null_by_default(self, client, auth):
+        r = self._create(client, auth)
+        assert r.json()["notes"] is None
+
+
+# ── Per-user import log ────────────────────────────────────────────────────────
+
+class TestPerUserImportLog:
+    def _upload_bp(self, client, auth):
+        with open(BP_CSV, "rb") as f:
+            return client.post("/api/v1/import", headers=auth,
+                               files={"file": ("bp.csv", f, "text/csv")})
+
+    def test_empty_for_new_user(self, client, auth):
+        resp = client.get("/api/v1/import/log", headers=auth)
+        assert resp.status_code == 200
+        assert resp.text == "No imports yet."
+
+    def test_only_shows_own_imports(self, client, auth):
+        self._upload_bp(client, auth)
+        # Second user imports weight
+        client.post("/api/v1/auth/register", json={"username": "log_other", "password": "pw"})
+        r2 = client.post("/api/v1/auth/token", data={"username": "log_other", "password": "pw"})
+        auth2 = {"Authorization": f"Bearer {r2.json()['access_token']}"}
+        with open(WEIGHT_CSV, "rb") as f:
+            client.post("/api/v1/import", headers=auth2,
+                        files={"file": ("wt.csv", f, "text/csv")})
+
+        log1 = client.get("/api/v1/import/log", headers=auth).text
+        log2 = client.get("/api/v1/import/log", headers=auth2).text
+        assert "weight" not in log1
+        assert "bp" not in log2
+
+    def test_lines_param_respected(self, client, auth):
+        with open(BP_CSV, "rb") as f:
+            client.post("/api/v1/import", headers=auth,
+                        files={"file": ("bp.csv", f, "text/csv")})
+        with open(WEIGHT_CSV, "rb") as f:
+            client.post("/api/v1/import", headers=auth,
+                        files={"file": ("wt.csv", f, "text/csv")})
+        resp = client.get("/api/v1/import/log?lines=1", headers=auth)
+        assert len(resp.text.splitlines()) == 1
+
+    def test_requires_auth(self, client):
+        assert client.get("/api/v1/import/log").status_code == 401
+
+
+# ── Background import ──────────────────────────────────────────────────────────
+
+class TestBackgroundImport:
+    # Build a >5 MB payload using a single row with a large notes value.
+    # This avoids the cost of inserting 300 K rows into SQLite.
+    @staticmethod
+    def _large_payload():
+        notes = "x" * (5 * 1024 * 1024 + 100)  # >5 MB in the notes field
+        header = "measured_at,systolic,diastolic,notes\n"
+        row    = f"2026-01-01 10:00:00,120,80,{notes}\n"
+        return (header + row).encode()
+
+    def test_small_file_returns_200(self, client, auth):
+        with open(BP_CSV, "rb") as f:
+            resp = client.post("/api/v1/import", headers=auth,
+                               files={"file": (str(BP_CSV), f, "text/csv")})
+        assert resp.status_code == 200
+        assert isinstance(resp.json(), list)
+
+    def test_large_file_returns_202_with_job_id(self, client, auth):
+        resp = client.post(
+            "/api/v1/import", headers=auth,
+            files={"file": ("big.csv", self._large_payload(), "text/csv")},
+        )
+        assert resp.status_code == 202
+        assert "job_id" in resp.json()
+
+    def test_status_404_unknown_job(self, client, auth):
+        resp = client.get("/api/v1/import/status/nonexistent-id", headers=auth)
+        assert resp.status_code == 404
+
+    def test_status_403_wrong_user(self, client, auth):
+        r = client.post("/api/v1/import", headers=auth,
+                        files={"file": ("big.csv", self._large_payload(), "text/csv")})
+        job_id = r.json()["job_id"]
+
+        client.post("/api/v1/auth/register", json={"username": "bg_other", "password": "pw"})
+        r2 = client.post("/api/v1/auth/token", data={"username": "bg_other", "password": "pw"})
+        auth2 = {"Authorization": f"Bearer {r2.json()['access_token']}"}
+        assert client.get(f"/api/v1/import/status/{job_id}", headers=auth2).status_code == 403
+
+    def test_status_done_after_completion(self, client, auth):
+        r = client.post("/api/v1/import", headers=auth,
+                        files={"file": ("big.csv", self._large_payload(), "text/csv")})
+        job_id = r.json()["job_id"]
+        # TestClient runs background tasks synchronously; status should be done immediately
+        sr = client.get(f"/api/v1/import/status/{job_id}", headers=auth).json()
+        assert sr["status"] == "done"
+        assert isinstance(sr["results"], list)

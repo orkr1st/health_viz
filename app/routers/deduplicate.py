@@ -9,7 +9,7 @@ from app.auth import get_current_user
 from app.database import get_db
 from app import models, schemas
 
-router = APIRouter(prefix="/api/deduplicate", tags=["deduplicate"])
+router = APIRouter(prefix="/api/v1/deduplicate", tags=["deduplicate"])
 
 
 class DeduplicatePreview(BaseModel):

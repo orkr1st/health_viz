@@ -8,7 +8,7 @@ from app.auth import get_current_user
 from app.database import get_db
 from app.schemas import ImportBatchRead
 
-router = APIRouter(prefix="/api/imports", tags=["imports"])
+router = APIRouter(prefix="/api/v1/imports", tags=["imports"])
 
 
 @router.get("", response_model=List[ImportBatchRead])

@@ -16,7 +16,7 @@ async function openLog() {
   openModal();
   try {
     const token = localStorage.getItem('health_token');
-    const res  = await fetch('/api/import/log?lines=300', {
+    const res  = await fetch('/api/v1/import/log?lines=300', {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     });
     const text = await res.text();
@@ -32,7 +32,7 @@ document.getElementById('view-log-btn').addEventListener('click', openLog);
 // ── Data export ───────────────────────────────────────────────
 document.getElementById('export-btn').addEventListener('click', async () => {
   const token = getToken();
-  const res = await fetch('/api/export', {
+  const res = await fetch('/api/v1/export', {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
   if (!res.ok) { alert('Export failed: ' + res.status); return; }
@@ -46,6 +46,87 @@ document.getElementById('export-btn').addEventListener('click', async () => {
   a.click();
   URL.revokeObjectURL(url);
 });
+
+// ── Print report ─────────────────────────────────────────────
+function printReport() {
+  const username = document.getElementById('header-username')?.textContent ?? '';
+  const today    = new Date().toLocaleDateString(undefined, { dateStyle: 'long' });
+
+  function bpRows() {
+    return (window._bpData || []).slice(0, 30).map(r => {
+      const cls = typeof getBpClass === 'function' ? getBpClass(r.systolic, r.diastolic) : '';
+      return `<tr class="${escHtml(cls)}">
+        <td>${escHtml(String(r.measured_at).slice(0, 16).replace('T', ' '))}</td>
+        <td>${r.systolic}</td><td>${r.diastolic}</td>
+        <td>${r.pulse ?? '—'}</td><td>${escHtml(r.notes ?? '')}</td></tr>`;
+    }).join('');
+  }
+
+  function weightRows() {
+    return (window._weightData || []).slice(0, 30).map(r => {
+      const cls = typeof getWeightClass === 'function' ? getWeightClass(r.value_kg) : '';
+      return `<tr class="${escHtml(cls)}">
+        <td>${escHtml(String(r.measured_at).slice(0, 16).replace('T', ' '))}</td>
+        <td>${r.value_kg.toFixed(1)} kg</td><td>${escHtml(r.notes ?? '')}</td></tr>`;
+    }).join('');
+  }
+
+  function stepsRows() {
+    return (window._stepsData || []).slice(0, 30).map(r => {
+      const cls = typeof getStepsClass === 'function' ? getStepsClass(r.step_count) : '';
+      const dist = r.distance_m != null ? (r.distance_m / 1000).toFixed(2) + ' km' : '—';
+      return `<tr class="${escHtml(cls)}">
+        <td>${escHtml(r.step_date)}</td>
+        <td>${r.step_count.toLocaleString()}</td><td>${dist}</td>
+        <td>${escHtml(r.notes ?? '')}</td></tr>`;
+    }).join('');
+  }
+
+  const html = `<!doctype html><html><head><meta charset="utf-8">
+<title>Health Report — ${escHtml(username)} — ${escHtml(today)}</title>
+<style>
+  body { font-family: system-ui, sans-serif; font-size: 12px; color: #1a1a1a; padding: 2cm; }
+  h1 { font-size: 1.4rem; margin-bottom: 0.25rem; }
+  h2 { font-size: 1rem; margin: 1.5rem 0 0.4rem; border-bottom: 1px solid #ccc; padding-bottom: 0.2rem; }
+  p.meta { color: #666; font-size: 0.85rem; margin: 0 0 1rem; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; }
+  th, td { border: 1px solid #ddd; padding: 4px 8px; text-align: left; }
+  th { background: #f4f4f4; font-weight: 600; }
+  tr.bp-normal   { background: rgba(22,163,74,0.08); }
+  tr.bp-elevated { background: rgba(234,179,8,0.15); }
+  tr.bp-high1    { background: rgba(249,115,22,0.15); }
+  tr.bp-high2    { background: rgba(239,68,68,0.15); }
+  tr.bp-crisis   { background: rgba(185,28,28,0.22); }
+  tr.wt-ok   { background: rgba(22,163,74,0.08); }
+  tr.wt-warn { background: rgba(234,179,8,0.15); }
+  tr.wt-over { background: rgba(239,68,68,0.15); }
+  tr.steps-great { background: rgba(22,163,74,0.08); }
+  tr.steps-good  { background: rgba(132,204,22,0.12); }
+  tr.steps-ok    { background: rgba(234,179,8,0.15); }
+  tr.steps-low   { background: rgba(239,68,68,0.12); }
+  @media print { body { padding: 0; } }
+</style></head><body>
+<h1>Health Report</h1>
+<p class="meta">${escHtml(username)} &nbsp;&middot;&nbsp; ${escHtml(today)}</p>
+<h2>Blood Pressure (last 30 readings)</h2>
+<table><thead><tr><th>Date</th><th>Sys</th><th>Dia</th><th>Pulse</th><th>Notes</th></tr></thead>
+<tbody>${bpRows() || '<tr><td colspan="5">No data</td></tr>'}</tbody></table>
+<h2>Weight (last 30 readings)</h2>
+<table><thead><tr><th>Date</th><th>Weight</th><th>Notes</th></tr></thead>
+<tbody>${weightRows() || '<tr><td colspan="3">No data</td></tr>'}</tbody></table>
+<h2>Steps (last 30 days)</h2>
+<table><thead><tr><th>Date</th><th>Steps</th><th>Distance</th><th>Notes</th></tr></thead>
+<tbody>${stepsRows() || '<tr><td colspan="4">No data</td></tr>'}</tbody></table>
+<script>window.onload = function() { window.print(); }<\/script>
+</body></html>`;
+
+  const blob = new Blob([html], { type: 'text/html' });
+  const url  = URL.createObjectURL(blob);
+  window.open(url, '_blank');
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+
+document.getElementById('print-report-btn').addEventListener('click', printReport);
 
 // ── Build results view ────────────────────────────────────────
 function escHtml(str) {
@@ -115,42 +196,73 @@ document.getElementById('import-form').addEventListener('submit', async (e) => {
   const formData = new FormData();
   formData.append('file', file);
 
-  try {
-    const token = localStorage.getItem('health_token');
-    const res = await fetch('/api/import', {
-      method: 'POST',
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
-      body: formData,
-    });
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`${res.status}: ${text}`);
-    }
-    const results = await res.json();
+  function _setModalError(msg) {
+    const p = document.createElement('p');
+    p.style.color = 'var(--danger)';
+    p.textContent = msg;
+    modalBody.replaceChildren(p);
+  }
 
-    // Quick header status
+  function _finishImport(results) {
     const totalInserted = results.reduce((s, r) => s + r.inserted, 0);
     const totalErrors   = results.reduce((s, r) => s + r.errors,   0);
     statusEl.textContent = `+${totalInserted} inserted, ${totalErrors} errors`;
     statusEl.className   = totalErrors > 0 ? 'error' : 'success';
     setTimeout(() => { statusEl.textContent = ''; statusEl.className = ''; }, 6000);
-
-    // Full results in modal
     modalBody.innerHTML = buildResultsHtml(results);
-    openModal();
-
-    // Refresh the active tab's data
     const activeTab = document.querySelector('.tab-btn.active')?.dataset.tab;
-    if (activeTab) {
-      window.dispatchEvent(new CustomEvent('tabchange', { detail: activeTab }));
-    }
-
+    if (activeTab) window.dispatchEvent(new CustomEvent('tabchange', { detail: activeTab }));
     fileInput.value = '';
     document.getElementById('import-file-name').textContent = 'No file selected';
+  }
+
+  try {
+    const token = localStorage.getItem('health_token');
+    const res = await fetch('/api/v1/import', {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: formData,
+    });
+
+    if (res.status === 202) {
+      const { job_id } = await res.json();
+      statusEl.textContent = 'Processing large file\u2026';
+      const p = document.createElement('p');
+      p.style.color = 'var(--muted)';
+      p.textContent = 'Processing\u2026 please wait.';
+      modalBody.replaceChildren(p);
+      openModal();
+      const poll = setInterval(async () => {
+        try {
+          const sr = await fetch(`/api/v1/import/status/${job_id}`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          });
+          if (!sr.ok) { clearInterval(poll); return; }
+          const job = await sr.json();
+          if (job.status === 'done') {
+            clearInterval(poll);
+            _finishImport(job.results);
+          } else if (job.status === 'error') {
+            clearInterval(poll);
+            statusEl.textContent = 'Import failed: ' + (job.error || 'unknown error');
+            statusEl.className   = 'error';
+            _setModalError(job.error || 'Unknown error');
+          }
+        } catch { clearInterval(poll); }
+      }, 2000);
+      return;
+    }
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`${res.status}: ${text}`);
+    }
+    _finishImport(await res.json());
+    openModal();
   } catch (err) {
     statusEl.textContent = 'Import failed: ' + err.message;
     statusEl.className   = 'error';
-    modalBody.innerHTML  = `<p style="color:var(--danger)">${escHtml(err.message)}</p>`;
+    _setModalError(err.message);
     openModal();
   }
 });

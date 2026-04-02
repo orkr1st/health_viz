@@ -46,6 +46,14 @@ with engine.connect() as conn:
         conn.execute(text("ALTER TABLE steps ADD COLUMN distance_m REAL"))
         conn.commit()
 
+    # ── notes column on steps ────────────────────────────────────────────────────
+    try:
+        conn.execute(text("ALTER TABLE steps ADD COLUMN notes TEXT"))
+        conn.commit()
+    except Exception as e:
+        if "duplicate column name" not in str(e).lower():
+            _log.warning("Migration warning (notes on steps): %s", e)
+
     # ── avatar_url column on user ────────────────────────────────────────────────
     try:
         conn.execute(text("ALTER TABLE \"user\" ADD COLUMN avatar_url VARCHAR(500)"))

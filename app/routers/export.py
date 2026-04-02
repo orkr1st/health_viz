@@ -11,7 +11,7 @@ from app.auth import get_current_user
 from app.database import get_db
 from app import models
 
-router = APIRouter(prefix="/api/export", tags=["export"])
+router = APIRouter(prefix="/api/v1/export", tags=["export"])
 
 
 def _bp_csv(records) -> str:
@@ -35,10 +35,11 @@ def _weight_csv(records) -> str:
 def _steps_csv(records) -> str:
     buf = io.StringIO()
     w = csv.writer(buf)
-    w.writerow(["step_date", "step_count", "distance_m"])
+    w.writerow(["step_date", "step_count", "distance_m", "notes"])
     for r in records:
         w.writerow([r.step_date, r.step_count,
-                    r.distance_m if r.distance_m is not None else ""])
+                    r.distance_m if r.distance_m is not None else "",
+                    r.notes or ""])
     return buf.getvalue()
 
 
