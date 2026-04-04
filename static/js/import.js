@@ -136,14 +136,6 @@ function printReport() {
 document.getElementById('print-report-btn').addEventListener('click', printReport);
 
 // ── Build results view ────────────────────────────────────────
-function escHtml(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
 function buildResultsHtml(results) {
   const rows = results.map(r => {
     const errCell  = r.errors  > 0 ? `<td class="num cell-error">${r.errors}</td>`  : `<td class="num">${r.errors}</td>`;

@@ -323,7 +323,7 @@ class TestChangePassword:
     def test_success(self, client, auth):
         resp = client.post(
             "/api/v1/auth/change-password",
-            json={"current_password": "secret", "new_password": "newpass"},
+            json={"current_password": "secret", "new_password": "newpass8!"},
             headers=auth,
         )
         assert resp.status_code == 200
@@ -333,13 +333,21 @@ class TestChangePassword:
         ).status_code == 401
         # New password works
         assert client.post(
-            "/api/v1/auth/token", data={"username": "tester", "password": "newpass"}
+            "/api/v1/auth/token", data={"username": "tester", "password": "newpass8!"}
         ).status_code == 200
 
     def test_wrong_current_password(self, client, auth):
         resp = client.post(
             "/api/v1/auth/change-password",
-            json={"current_password": "wrongpass", "new_password": "newpass"},
+            json={"current_password": "wrongpass", "new_password": "newpass8!"},
+            headers=auth,
+        )
+        assert resp.status_code == 400
+
+    def test_short_new_password(self, client, auth):
+        resp = client.post(
+            "/api/v1/auth/change-password",
+            json={"current_password": "secret", "new_password": "short"},
             headers=auth,
         )
         assert resp.status_code == 400
@@ -355,7 +363,7 @@ class TestChangePassword:
     def test_requires_auth(self, client):
         resp = client.post(
             "/api/v1/auth/change-password",
-            json={"current_password": "secret", "new_password": "newpass"},
+            json={"current_password": "secret", "new_password": "newpass8!"},
         )
         assert resp.status_code == 401
 

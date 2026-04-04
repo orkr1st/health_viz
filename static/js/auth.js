@@ -358,10 +358,10 @@ function renderImportHistory(batches) {
     if (b.steps_count)  counts.push(`${b.steps_count} steps`);
     const countStr = counts.length ? counts.join(', ') : '0 records';
     return `<div class="import-history-row" data-id="${b.id}">
-      <span class="import-history-name">${b.filename}</span>
+      <span class="import-history-name">${escHtml(b.filename)}</span>
       <span class="import-history-date">${fmtImportDate(b.imported_at)}</span>
-      <span class="import-history-counts">${countStr}</span>
-      <button class="btn-danger-sm" data-id="${b.id}" data-name="${b.filename}" data-count="${counts.join(', ') || '0 records'}">Delete</button>
+      <span class="import-history-counts">${escHtml(countStr)}</span>
+      <button class="btn-danger-sm" data-id="${b.id}" data-name="${escHtml(b.filename)}" data-count="${escHtml(counts.join(', ') || '0 records')}">Delete</button>
     </div>`;
   }).join('');
 

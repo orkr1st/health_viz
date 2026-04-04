@@ -92,7 +92,7 @@ function renderBpTable(records) {
       <td>${r.systolic}</td>
       <td>${r.diastolic}</td>
       <td>${r.pulse ?? '—'}</td>
-      <td>${r.notes ?? ''}</td>
+      <td>${escHtml(r.notes ?? '')}</td>
       <td></td>`;
     tr.lastElementChild.appendChild(makeDeleteBtn('/api/v1/blood-pressure', r.id, loadBpData));
     tbody.appendChild(tr);
@@ -157,7 +157,7 @@ function renderWeightTable(records) {
     tr.innerHTML = `
       <td>${fmtDatetime(r.measured_at)}</td>
       <td>${r.value_kg.toFixed(1)}</td>
-      <td>${r.notes ?? ''}</td>
+      <td>${escHtml(r.notes ?? '')}</td>
       <td></td>`;
     tr.lastElementChild.appendChild(makeDeleteBtn('/api/v1/weight', r.id, loadWeightData));
     tbody.appendChild(tr);

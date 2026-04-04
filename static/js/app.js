@@ -74,6 +74,15 @@ function fmtDate(str) {
   return str.substring(0, 10);
 }
 
+// ── HTML escaping (use for all user-controlled data in innerHTML) ─────────────
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 // ── Status helpers ────────────────────────────────────────────
 function setStatus(el, msg, isError = false) {
   el.textContent = msg;
@@ -110,7 +119,7 @@ function avg(arr) {
 // Make helpers global so other scripts can use them
 Object.assign(window, {
   apiFetch, apiGet, apiPost, apiPut, apiDelete,
-  fmtDatetime, fmtDate, setStatus, last30Days, last7Days, avg, filterRange,
+  fmtDatetime, fmtDate, setStatus, last30Days, last7Days, avg, filterRange, escHtml,
 });
 
 // Show dashboard on load (no tabchange — authReady handles initial data load)

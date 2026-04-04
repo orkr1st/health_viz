@@ -52,8 +52,8 @@ def change_password(
 ):
     if not verify_password(body.current_password, current_user.hashed_password):
         raise HTTPException(status_code=400, detail="Current password is incorrect.")
-    if len(body.new_password) < 1:
-        raise HTTPException(status_code=400, detail="New password must not be empty.")
+    if len(body.new_password) < 8:
+        raise HTTPException(status_code=400, detail="New password must be at least 8 characters.")
     current_user.hashed_password = get_password_hash(body.new_password)
     db.commit()
     db.refresh(current_user)
@@ -74,6 +74,8 @@ def update_weight_goal(
 
 AVATAR_DIR = "static/avatars"
 ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+ALLOWED_EXTS  = {"jpg", "jpeg", "png", "webp", "gif"}
+AVATAR_MAX_BYTES = 5 * 1024 * 1024  # 5 MB
 
 
 @router.post("/avatar", response_model=schemas.UserRead)
@@ -84,11 +86,17 @@ async def upload_avatar(
 ):
     if file.content_type not in ALLOWED_TYPES:
         raise HTTPException(status_code=400, detail="Unsupported image type.")
-    ext = file.filename.rsplit(".", 1)[-1].lower() if "." in file.filename else "jpg"
+    raw_ext = file.filename.rsplit(".", 1)[-1].lower() if "." in (file.filename or "") else ""
+    if raw_ext not in ALLOWED_EXTS:
+        raise HTTPException(status_code=400, detail="Unsupported file extension.")
+    ext = raw_ext
+    content = await file.read()
+    if len(content) > AVATAR_MAX_BYTES:
+        raise HTTPException(status_code=413, detail="Avatar exceeds 5 MB limit.")
     filename = f"{current_user.id}.{ext}"
     path = os.path.join(AVATAR_DIR, filename)
     with open(path, "wb") as f:
-        shutil.copyfileobj(file.file, f)
+        f.write(content)
     current_user.avatar_url = f"/avatars/{filename}"
     db.commit()
     db.refresh(current_user)
