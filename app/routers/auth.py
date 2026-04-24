@@ -77,6 +77,22 @@ ALLOWED_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
 ALLOWED_EXTS  = {"jpg", "jpeg", "png", "webp", "gif"}
 AVATAR_MAX_BYTES = 5 * 1024 * 1024  # 5 MB
 
+_MAGIC = [
+    (b"\xff\xd8\xff",               "jpeg"),
+    (b"\x89PNG\r\n\x1a\n",          "png"),
+    (b"GIF87a",                      "gif"),
+    (b"GIF89a",                      "gif"),
+    (b"RIFF",                        "webp"),   # confirmed below
+]
+
+def _detect_image_type(data: bytes) -> str | None:
+    for magic, fmt in _MAGIC:
+        if data[:len(magic)] == magic:
+            if fmt == "webp" and data[8:12] != b"WEBP":
+                continue
+            return fmt
+    return None
+
 
 @router.post("/avatar", response_model=schemas.UserRead)
 async def upload_avatar(
@@ -93,6 +109,8 @@ async def upload_avatar(
     content = await file.read()
     if len(content) > AVATAR_MAX_BYTES:
         raise HTTPException(status_code=413, detail="Avatar exceeds 5 MB limit.")
+    if _detect_image_type(content) is None:
+        raise HTTPException(status_code=400, detail="File content is not a recognised image.")
     filename = f"{current_user.id}.{ext}"
     path = os.path.join(AVATAR_DIR, filename)
     with open(path, "wb") as f:

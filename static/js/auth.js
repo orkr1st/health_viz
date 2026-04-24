@@ -26,7 +26,7 @@ function setHeaderUser(username, avatarUrl) {
   headerUser.textContent = username;
   const img = document.getElementById('header-avatar');
   const placeholder = document.getElementById('header-avatar-placeholder');
-  if (avatarUrl) {
+  if (avatarUrl && avatarUrl.startsWith('/avatars/')) {
     img.src = avatarUrl + '?v=' + Date.now();
     img.classList.remove('hidden');
     placeholder.style.display = 'none';
@@ -268,34 +268,43 @@ function buildDedupBody(data) {
   const total = data.blood_pressure.length + data.weight.length + data.steps.length;
   dedupConfirm.textContent = `Remove ${total} duplicate(s)`;
 
-  let html = `<p style="margin-bottom:0.75rem">The following records will be <strong>permanently deleted</strong>. The earliest entry in each group is kept.</p>`;
+  dedupModalBody.textContent = '';
 
-  if (data.blood_pressure.length) {
-    html += `<h3 style="font-size:0.9rem;margin:0.5rem 0 0.25rem">Blood Pressure (${data.blood_pressure.length})</h3><ul class="dedup-list">`;
-    data.blood_pressure.forEach(r => {
-      const pulse = r.pulse != null ? ` pulse ${r.pulse}` : '';
-      html += `<li>${fmtDatetime(r.measured_at)} — ${r.systolic}/${r.diastolic}${pulse}</li>`;
+  const intro = document.createElement('p');
+  intro.style.marginBottom = '0.75rem';
+  intro.appendChild(document.createTextNode('The following records will be '));
+  const strong = document.createElement('strong');
+  strong.textContent = 'permanently deleted';
+  intro.appendChild(strong);
+  intro.appendChild(document.createTextNode('. The earliest entry in each group is kept.'));
+  dedupModalBody.appendChild(intro);
+
+  function _section(title, items, rowFn) {
+    if (!items.length) return;
+    const h = document.createElement('h3');
+    h.style.cssText = 'font-size:0.9rem;margin:0.5rem 0 0.25rem';
+    h.textContent = title;
+    dedupModalBody.appendChild(h);
+    const ul = document.createElement('ul');
+    ul.className = 'dedup-list';
+    items.forEach(r => {
+      const li = document.createElement('li');
+      li.textContent = rowFn(r);
+      ul.appendChild(li);
     });
-    html += '</ul>';
+    dedupModalBody.appendChild(ul);
   }
 
-  if (data.weight.length) {
-    html += `<h3 style="font-size:0.9rem;margin:0.5rem 0 0.25rem">Weight (${data.weight.length})</h3><ul class="dedup-list">`;
-    data.weight.forEach(r => {
-      html += `<li>${fmtDatetime(r.measured_at)} — ${r.value_kg.toFixed(1)} kg</li>`;
-    });
-    html += '</ul>';
-  }
-
-  if (data.steps.length) {
-    html += `<h3 style="font-size:0.9rem;margin:0.5rem 0 0.25rem">Steps (${data.steps.length})</h3><ul class="dedup-list">`;
-    data.steps.forEach(r => {
-      html += `<li>${r.step_date} — ${r.step_count.toLocaleString()} steps</li>`;
-    });
-    html += '</ul>';
-  }
-
-  dedupModalBody.innerHTML = html;
+  _section(`Blood Pressure (${data.blood_pressure.length})`, data.blood_pressure, r => {
+    const pulse = r.pulse != null ? ` pulse ${r.pulse}` : '';
+    return `${fmtDatetime(r.measured_at)} — ${r.systolic}/${r.diastolic}${pulse}`;
+  });
+  _section(`Weight (${data.weight.length})`, data.weight, r =>
+    `${fmtDatetime(r.measured_at)} — ${r.value_kg.toFixed(1)} kg`
+  );
+  _section(`Steps (${data.steps.length})`, data.steps, r =>
+    `${r.step_date} — ${r.step_count.toLocaleString()} steps`
+  );
 }
 
 dedupBtn.addEventListener('click', async () => {
@@ -416,7 +425,11 @@ importHistoryBtn.addEventListener('click', async () => {
     if (!res.ok) throw new Error(await res.text());
     renderImportHistory(await res.json());
   } catch (err) {
-    importHistoryList.innerHTML = `<p class="import-history-empty">Error: ${err.message}</p>`;
+    const errP = document.createElement('p');
+    errP.className = 'import-history-empty';
+    errP.textContent = `Error: ${err.message}`;
+    importHistoryList.textContent = '';
+    importHistoryList.appendChild(errP);
   }
 });
 

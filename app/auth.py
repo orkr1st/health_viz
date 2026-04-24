@@ -1,4 +1,6 @@
+import logging
 import os
+import secrets
 from datetime import datetime, timedelta, timezone
 
 import bcrypt as _bcrypt
@@ -10,7 +12,18 @@ from sqlalchemy.orm import Session
 from app import models
 from app.database import get_db
 
-SECRET_KEY = os.environ.get("SECRET_KEY", "change-me-in-production")
+_log = logging.getLogger(__name__)
+
+_key_env = os.environ.get("SECRET_KEY")
+if _key_env:
+    SECRET_KEY = _key_env
+else:
+    SECRET_KEY = secrets.token_hex(32)
+    _log.warning(
+        "SECRET_KEY not set — using a randomly generated key. "
+        "All sessions will be invalidated on restart. "
+        "Set SECRET_KEY in your .env file for persistent sessions."
+    )
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_DAYS = 7
 

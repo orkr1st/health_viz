@@ -13,23 +13,23 @@ STEPS_CSV = TEST_DIR / "com.samsung.shealth.step_daily_trend.test.csv"
 
 class TestAuth:
     def test_register(self, client):
-        resp = client.post("/api/v1/auth/register", json={"username": "newuser", "password": "pass"})
+        resp = client.post("/api/v1/auth/register", json={"username": "newuser", "password": "pass1234"})
         assert resp.status_code == 201
         assert resp.json()["username"] == "newuser"
 
     def test_register_duplicate(self, client):
-        client.post("/api/v1/auth/register", json={"username": "dup", "password": "pass"})
-        resp = client.post("/api/v1/auth/register", json={"username": "dup", "password": "pass"})
+        client.post("/api/v1/auth/register", json={"username": "dup", "password": "pass1234"})
+        resp = client.post("/api/v1/auth/register", json={"username": "dup", "password": "pass1234"})
         assert resp.status_code == 400
 
     def test_login_success(self, client):
-        client.post("/api/v1/auth/register", json={"username": "loginuser", "password": "secret"})
-        resp = client.post("/api/v1/auth/token", data={"username": "loginuser", "password": "secret"})
+        client.post("/api/v1/auth/register", json={"username": "loginuser", "password": "secret12"})
+        resp = client.post("/api/v1/auth/token", data={"username": "loginuser", "password": "secret12"})
         assert resp.status_code == 200
         assert "access_token" in resp.json()
 
     def test_login_wrong_password(self, client):
-        client.post("/api/v1/auth/register", json={"username": "wrongpw", "password": "correct"})
+        client.post("/api/v1/auth/register", json={"username": "wrongpw", "password": "correct1"})
         resp = client.post("/api/v1/auth/token", data={"username": "wrongpw", "password": "wrong"})
         assert resp.status_code == 401
 
@@ -37,6 +37,10 @@ class TestAuth:
         resp = client.get("/api/v1/auth/me", headers=auth)
         assert resp.status_code == 200
         assert resp.json()["username"] == "tester"
+
+    def test_register_short_password(self, client):
+        resp = client.post("/api/v1/auth/register", json={"username": "shortpw", "password": "short"})
+        assert resp.status_code == 422
 
     def test_me_without_token(self, client):
         resp = client.get("/api/v1/auth/me")
@@ -93,8 +97,8 @@ class TestBloodPressureCrud:
     def test_user_isolation(self, client, auth):
         record_id = self._create(client, auth).json()["id"]
         # Second user cannot access first user's record
-        client.post("/api/v1/auth/register", json={"username": "other_bp", "password": "pw"})
-        r2 = client.post("/api/v1/auth/token", data={"username": "other_bp", "password": "pw"})
+        client.post("/api/v1/auth/register", json={"username": "other_bp", "password": "pw123456"})
+        r2 = client.post("/api/v1/auth/token", data={"username": "other_bp", "password": "pw123456"})
         other_auth = {"Authorization": f"Bearer {r2.json()['access_token']}"}
         resp = client.get(f"/api/v1/blood-pressure/{record_id}", headers=other_auth)
         assert resp.status_code == 404
@@ -146,8 +150,8 @@ class TestWeightCrud:
 
     def test_user_isolation(self, client, auth):
         record_id = self._create(client, auth).json()["id"]
-        client.post("/api/v1/auth/register", json={"username": "other_w", "password": "pw"})
-        r2 = client.post("/api/v1/auth/token", data={"username": "other_w", "password": "pw"})
+        client.post("/api/v1/auth/register", json={"username": "other_w", "password": "pw123456"})
+        r2 = client.post("/api/v1/auth/token", data={"username": "other_w", "password": "pw123456"})
         other_auth = {"Authorization": f"Bearer {r2.json()['access_token']}"}
         resp = client.get(f"/api/v1/weight/{record_id}", headers=other_auth)
         assert resp.status_code == 404
@@ -199,8 +203,8 @@ class TestStepsCrud:
 
     def test_user_isolation(self, client, auth):
         record_id = self._create(client, auth).json()["id"]
-        client.post("/api/v1/auth/register", json={"username": "other_s", "password": "pw"})
-        r2 = client.post("/api/v1/auth/token", data={"username": "other_s", "password": "pw"})
+        client.post("/api/v1/auth/register", json={"username": "other_s", "password": "pw123456"})
+        r2 = client.post("/api/v1/auth/token", data={"username": "other_s", "password": "pw123456"})
         other_auth = {"Authorization": f"Bearer {r2.json()['access_token']}"}
         resp = client.get(f"/api/v1/steps/{record_id}", headers=other_auth)
         assert resp.status_code == 404
@@ -323,13 +327,13 @@ class TestChangePassword:
     def test_success(self, client, auth):
         resp = client.post(
             "/api/v1/auth/change-password",
-            json={"current_password": "secret", "new_password": "newpass8!"},
+            json={"current_password": "secret12", "new_password": "newpass8!"},
             headers=auth,
         )
         assert resp.status_code == 200
         # Old password no longer works
         assert client.post(
-            "/api/v1/auth/token", data={"username": "tester", "password": "secret"}
+            "/api/v1/auth/token", data={"username": "tester", "password": "secret12"}
         ).status_code == 401
         # New password works
         assert client.post(
@@ -347,7 +351,7 @@ class TestChangePassword:
     def test_short_new_password(self, client, auth):
         resp = client.post(
             "/api/v1/auth/change-password",
-            json={"current_password": "secret", "new_password": "short"},
+            json={"current_password": "secret12", "new_password": "short"},
             headers=auth,
         )
         assert resp.status_code == 400
@@ -355,7 +359,7 @@ class TestChangePassword:
     def test_empty_new_password(self, client, auth):
         resp = client.post(
             "/api/v1/auth/change-password",
-            json={"current_password": "secret", "new_password": ""},
+            json={"current_password": "secret12", "new_password": ""},
             headers=auth,
         )
         assert resp.status_code == 400
@@ -363,7 +367,7 @@ class TestChangePassword:
     def test_requires_auth(self, client):
         resp = client.post(
             "/api/v1/auth/change-password",
-            json={"current_password": "secret", "new_password": "newpass8!"},
+            json={"current_password": "secret12", "new_password": "newpass8!"},
         )
         assert resp.status_code == 401
 
@@ -456,8 +460,8 @@ class TestDeduplicate:
         self._bp(client, auth, "2024-01-01T10:00:00")
         self._bp(client, auth, "2024-01-01T11:00:00")
         # Second user has a clean record
-        client.post("/api/v1/auth/register", json={"username": "other_dedup", "password": "pw"})
-        r2 = client.post("/api/v1/auth/token", data={"username": "other_dedup", "password": "pw"})
+        client.post("/api/v1/auth/register", json={"username": "other_dedup", "password": "pw123456"})
+        r2 = client.post("/api/v1/auth/token", data={"username": "other_dedup", "password": "pw123456"})
         other_auth = {"Authorization": f"Bearer {r2.json()['access_token']}"}
         self._bp(client, other_auth, "2024-01-01T10:00:00")
         # Deduplicate as tester
@@ -657,8 +661,8 @@ class TestImportHistory:
         batch_id = client.get("/api/v1/imports", headers=auth).json()[0]["id"]
 
         # Second user tries to delete tester's batch
-        client.post("/api/v1/auth/register", json={"username": "other_ih", "password": "pw"})
-        r2 = client.post("/api/v1/auth/token", data={"username": "other_ih", "password": "pw"})
+        client.post("/api/v1/auth/register", json={"username": "other_ih", "password": "pw123456"})
+        r2 = client.post("/api/v1/auth/token", data={"username": "other_ih", "password": "pw123456"})
         other_auth = {"Authorization": f"Bearer {r2.json()['access_token']}"}
 
         resp = client.delete(f"/api/v1/imports/{batch_id}", headers=other_auth)
@@ -707,8 +711,8 @@ class TestExport:
                     json={"measured_at": "2026-01-01T10:00:00",
                           "systolic": 120, "diastolic": 80})
         # Register a second user
-        client.post("/api/v1/auth/register", json={"username": "other_export", "password": "pw"})
-        r2 = client.post("/api/v1/auth/token", data={"username": "other_export", "password": "pw"})
+        client.post("/api/v1/auth/register", json={"username": "other_export", "password": "pw123456"})
+        r2 = client.post("/api/v1/auth/token", data={"username": "other_export", "password": "pw123456"})
         auth2 = {"Authorization": f"Bearer {r2.json()['access_token']}"}
 
         # Export for second user should have empty BP CSV (header only)
@@ -780,8 +784,8 @@ class TestPerUserImportLog:
     def test_only_shows_own_imports(self, client, auth):
         self._upload_bp(client, auth)
         # Second user imports weight
-        client.post("/api/v1/auth/register", json={"username": "log_other", "password": "pw"})
-        r2 = client.post("/api/v1/auth/token", data={"username": "log_other", "password": "pw"})
+        client.post("/api/v1/auth/register", json={"username": "log_other", "password": "pw123456"})
+        r2 = client.post("/api/v1/auth/token", data={"username": "log_other", "password": "pw123456"})
         auth2 = {"Authorization": f"Bearer {r2.json()['access_token']}"}
         with open(WEIGHT_CSV, "rb") as f:
             client.post("/api/v1/import", headers=auth2,
@@ -842,8 +846,8 @@ class TestBackgroundImport:
                         files={"file": ("big.csv", self._large_payload(), "text/csv")})
         job_id = r.json()["job_id"]
 
-        client.post("/api/v1/auth/register", json={"username": "bg_other", "password": "pw"})
-        r2 = client.post("/api/v1/auth/token", data={"username": "bg_other", "password": "pw"})
+        client.post("/api/v1/auth/register", json={"username": "bg_other", "password": "pw123456"})
+        r2 = client.post("/api/v1/auth/token", data={"username": "bg_other", "password": "pw123456"})
         auth2 = {"Authorization": f"Bearer {r2.json()['access_token']}"}
         assert client.get(f"/api/v1/import/status/{job_id}", headers=auth2).status_code == 403
 
