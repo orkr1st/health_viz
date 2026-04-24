@@ -6,10 +6,11 @@
   <title>Health Tracker</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=13" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css?v=14" />
 </head>
 <body>
+
   <!-- ── Auth Overlay ───────────────────────────────────────── -->
   <div id="auth-overlay" class="hidden">
     <div class="auth-box">
@@ -27,114 +28,381 @@
 
   <!-- ── Header ─────────────────────────────────────────────── -->
   <header>
-    <h1>Health Tracker</h1>
-    <div class="header-auth">
-      <img id="header-avatar" class="header-avatar hidden" alt="avatar" title="Click to change avatar" />
-      <div id="header-avatar-placeholder" class="header-avatar-placeholder" title="Click to change avatar"></div>
-      <input type="file" id="avatar-file-input" accept="image/*" style="display:none" />
-      <span id="header-username" class="header-user"></span>
-      <button id="help-btn" class="btn-link-header" title="Help &amp; data formats">?</button>
-      <button id="logout-btn" class="btn-link-header">Logout</button>
+    <div class="brand" aria-label="Health Tracker">
+      <span class="brand-mark" aria-hidden="true"></span>Health Tracker
     </div>
-    <div class="settings-menu">
-      <button id="settings-btn" class="btn-link-header" title="Settings">⚙</button>
-      <div id="settings-dropdown" class="settings-dropdown hidden">
-        <p class="settings-section-label">Data</p>
-        <form id="import-form">
-          <label for="import-file">Samsung Health import:</label>
-          <input type="file" id="import-file" accept=".zip,.csv" />
-          <span id="import-file-name" class="import-file-name">No file selected</span>
-          <button type="submit">Import</button>
-        </form>
-        <div id="import-status"></div>
-        <button type="button" id="import-history-btn" class="btn-link-settings">Import history…</button>
-        <div class="dedup-section">
-          <button type="button" id="dedup-btn" class="btn-link-settings">Remove duplicates…</button>
-          <p id="dedup-status" class="form-status"></p>
-        </div>
-        <button type="button" id="export-btn" class="btn-link-settings">Export data…</button>
-        <button type="button" id="print-report-btn" class="btn-link-settings">Print report…</button>
-        <button id="view-log-btn" type="button">View Log</button>
 
-        <hr class="settings-divider" />
-        <p class="settings-section-label">Account</p>
-        <div class="settings-avatar-row">
-          <label>Profile picture:</label>
-          <button type="button" id="change-avatar-btn">Change avatar…</button>
-        </div>
-        <div class="change-pw-section">
-          <button type="button" id="pw-toggle-btn" class="btn-link-settings">Change password…</button>
-          <div id="pw-fields" style="display:none">
-            <label>Current password
-              <input type="password" id="pw-current" autocomplete="current-password" />
-            </label>
-            <label>New password
-              <input type="password" id="pw-new" autocomplete="new-password" />
-            </label>
-            <label>Confirm new password
-              <input type="password" id="pw-confirm" autocomplete="new-password" />
-            </label>
-            <button type="button" id="pw-submit-btn">Update password</button>
-            <p id="pw-status" class="form-status"></p>
+    <nav class="header-nav" role="tablist" aria-label="Main navigation">
+      <button class="tab-btn nav-item active" data-tab="dashboard" role="tab" aria-selected="true">Overview</button>
+      <button class="tab-btn nav-item" data-tab="blood-pressure" role="tab" aria-selected="false">Blood pressure</button>
+      <button class="tab-btn nav-item" data-tab="weight" role="tab" aria-selected="false">Weight</button>
+      <button class="tab-btn nav-item" data-tab="steps" role="tab" aria-selected="false">Steps</button>
+    </nav>
+
+    <div class="header-right">
+      <!-- Settings -->
+      <div class="settings-menu">
+        <button id="settings-btn" class="icon-btn" aria-label="Settings" title="Settings">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+        <div id="settings-dropdown" class="settings-dropdown hidden">
+          <p class="settings-section-label">Data</p>
+          <form id="import-form">
+            <label for="import-file">Samsung Health import:</label>
+            <input type="file" id="import-file" accept=".zip,.csv" />
+            <span id="import-file-name" class="import-file-name">No file selected</span>
+            <button type="submit">Import</button>
+          </form>
+          <div id="import-status"></div>
+          <button type="button" id="import-history-btn" class="btn-link-settings">Import history…</button>
+          <div class="dedup-section">
+            <button type="button" id="dedup-btn" class="btn-link-settings">Remove duplicates…</button>
+            <p id="dedup-status" class="form-status"></p>
+          </div>
+          <button type="button" id="export-btn" class="btn-link-settings">Export data…</button>
+          <button type="button" id="print-report-btn" class="btn-link-settings">Print report…</button>
+          <button id="view-log-btn" type="button">View Log</button>
+          <hr class="settings-divider" />
+          <p class="settings-section-label">Account</p>
+          <div class="change-pw-section">
+            <button type="button" id="pw-toggle-btn" class="btn-link-settings">Change password…</button>
+            <div id="pw-fields" style="display:none">
+              <label>Current password
+                <input type="password" id="pw-current" autocomplete="current-password" />
+              </label>
+              <label>New password
+                <input type="password" id="pw-new" autocomplete="new-password" />
+              </label>
+              <label>Confirm new password
+                <input type="password" id="pw-confirm" autocomplete="new-password" />
+              </label>
+              <button type="button" id="pw-submit-btn">Update password</button>
+              <p id="pw-status" class="form-status"></p>
+            </div>
           </div>
         </div>
+      </div>
+
+      <!-- Help -->
+      <button id="help-btn" class="icon-btn" aria-label="Help" title="Help &amp; data formats">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </button>
+
+      <!-- Avatar -->
+      <div class="avatar-wrap">
+        <img id="header-avatar" class="header-avatar hidden" alt="avatar" />
+        <div id="header-avatar-placeholder" class="avatar-btn" role="button" tabindex="0" aria-label="Account menu" aria-haspopup="true"></div>
+        <div id="avatar-dropdown" class="avatar-dropdown hidden" role="menu">
+          <div class="avatar-menu-user">
+            <span id="header-username" class="avatar-menu-name"></span>
+          </div>
+          <button id="change-avatar-btn" class="avatar-menu-item" role="menuitem">Change avatar…</button>
+          <hr class="avatar-menu-divider" />
+          <button id="logout-btn" class="avatar-menu-item avatar-menu-item--danger" role="menuitem">Logout</button>
+        </div>
+        <input type="file" id="avatar-file-input" accept="image/*" style="display:none" />
       </div>
     </div>
   </header>
 
-  <!-- ── Tabs ───────────────────────────────────────────────── -->
-  <nav class="tabs" role="tablist">
-    <button class="tab-btn active" data-tab="dashboard"       role="tab">Dashboard</button>
-    <button class="tab-btn"        data-tab="blood-pressure"  role="tab">Blood Pressure</button>
-    <button class="tab-btn"        data-tab="weight"          role="tab">Weight</button>
-<button class="tab-btn"        data-tab="steps"           role="tab">Steps</button>
-  </nav>
-
   <main>
 
-    <!-- ── Dashboard ──────────────────────────────────────────── -->
-    <section id="tab-dashboard" class="tab-content active">
-      <h2>Dashboard — last 30 days</h2>
-      <div class="dashboard-cards">
-        <div class="card" data-nav-tab="blood-pressure">
-          <h3>Blood Pressure</h3>
-          <p id="dash-bp-latest" class="latest-value">—</p>
-          <p id="dash-bp-avg7" class="avg-value">Avg (last 7): —</p>
-          <canvas id="dash-bp-chart"></canvas>
+    <!-- ── Overview ──────────────────────────────────────────── -->
+    <section id="tab-dashboard" class="tab-content active" role="tabpanel">
+
+      <!-- Hero -->
+      <section class="hero">
+        <div>
+          <h1 class="greeting" id="hero-greeting">Good day. <em>Here's your week.</em></h1>
+          <p class="greeting-sub" id="hero-sub">Loading…</p>
         </div>
-        <div class="card" data-nav-tab="weight">
-          <h3>Weight</h3>
-          <p id="dash-weight-latest" class="latest-value">—</p>
-          <p id="dash-weight-avg7" class="avg-value">Avg (last 7): —</p>
-          <canvas id="dash-weight-chart"></canvas>
-        </div>
-        <div class="card" data-nav-tab="steps">
-          <h3>Steps</h3>
-          <p id="dash-steps-latest" class="latest-value">—</p>
-          <p id="dash-steps-avg7" class="avg-value">Avg (last 7): —</p>
-          <canvas id="dash-steps-chart"></canvas>
-        </div>
-      </div>
+        <button class="add-btn" id="new-entry-btn" aria-label="New entry">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          New entry
+        </button>
+      </section>
+
+      <!-- Metric cards -->
+      <section class="metrics" aria-label="Metric overview">
+        <article class="metric" data-nav-tab="blood-pressure" tabindex="0" role="button" aria-label="Go to blood pressure detail">
+          <div class="metric-head">
+            <div class="metric-label">
+              <span class="metric-dot" style="background:var(--bp)" aria-hidden="true"></span>Blood pressure
+            </div>
+            <span id="metric-bp-trend" class="trend flat" aria-label="Trend">—</span>
+          </div>
+          <div class="metric-value" id="metric-bp-value">—<span class="unit">mmHg</span></div>
+          <p class="metric-caption" id="metric-bp-caption">No data yet</p>
+          <canvas id="spark-bp" class="spark" aria-hidden="true"></canvas>
+        </article>
+
+        <article class="metric" data-nav-tab="weight" tabindex="0" role="button" aria-label="Go to weight detail">
+          <div class="metric-head">
+            <div class="metric-label">
+              <span class="metric-dot" style="background:var(--weight)" aria-hidden="true"></span>Weight
+            </div>
+            <span id="metric-weight-trend" class="trend flat" aria-label="Trend">—</span>
+          </div>
+          <div class="metric-value" id="metric-weight-value">—<span class="unit">kg</span></div>
+          <p class="metric-caption" id="metric-weight-caption">No data yet</p>
+          <canvas id="spark-weight" class="spark" aria-hidden="true"></canvas>
+        </article>
+
+        <article class="metric" data-nav-tab="steps" tabindex="0" role="button" aria-label="Go to steps detail">
+          <div class="metric-head">
+            <div class="metric-label">
+              <span class="metric-dot" style="background:var(--steps)" aria-hidden="true"></span>Steps
+            </div>
+            <span id="metric-steps-trend" class="trend flat" aria-label="Trend">—</span>
+          </div>
+          <div class="metric-value" id="metric-steps-value">—<span class="unit">today</span></div>
+          <p class="metric-caption" id="metric-steps-caption">No data yet</p>
+          <canvas id="spark-steps" class="spark" aria-hidden="true"></canvas>
+        </article>
+      </section>
+
     </section>
 
     <!-- ── Blood Pressure ─────────────────────────────────────── -->
-    <section id="tab-blood-pressure" class="tab-content">
-      <h2>Blood Pressure</h2>
-      <div class="range-bar">
-        <button class="range-btn" data-range="1W">1W</button>
-        <button class="range-btn active" data-range="1M">1M</button>
-        <button class="range-btn" data-range="3M">3M</button>
-        <button class="range-btn" data-range="6M">6M</button>
-        <button class="range-btn" data-range="1Y">1Y</button>
-        <button class="range-btn" data-range="5Y">5Y</button>
-        <button class="range-btn" data-range="all">All</button>
-      </div>
-      <div class="tab-layout">
-        <div class="chart-area">
-          <canvas id="bp-chart"></canvas>
+    <section id="tab-blood-pressure" class="tab-content" role="tabpanel">
+
+      <div class="detail">
+        <div class="detail-head">
+          <h2 class="detail-title">Blood pressure <em id="bp-detail-month"></em></h2>
+          <div class="range-seg" role="group" aria-label="Time range">
+            <button class="range-btn" data-range="1W">1W</button>
+            <button class="range-btn active" data-range="1M">1M</button>
+            <button class="range-btn" data-range="3M">3M</button>
+            <button class="range-btn" data-range="6M">6M</button>
+            <button class="range-btn" data-range="1Y">1Y</button>
+            <button class="range-btn" data-range="all">All</button>
+          </div>
         </div>
-        <aside class="sidebar">
-          <h3>New Entry</h3>
+        <div class="detail-body">
+          <div class="chart-wrap">
+            <div class="chart-legend">
+              <div class="legend-item">
+                <span class="legend-dot" style="background:#b6542a" aria-hidden="true"></span>
+                Systolic<span class="legend-val" id="bp-legend-sys">—</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-dot" style="background:#d9a48a" aria-hidden="true"></span>
+                Diastolic<span class="legend-val" id="bp-legend-dia">—</span>
+              </div>
+              <div class="legend-item" style="margin-left:auto">
+                <span style="color:var(--muted)">Pulse avg</span>
+                <span class="legend-val" id="bp-legend-pulse">—</span>
+              </div>
+            </div>
+            <canvas id="bp-chart"></canvas>
+          </div>
+          <div class="stat-col">
+            <div class="stat">
+              <div class="stat-label">Latest reading</div>
+              <div class="stat-value" id="bp-stat-latest">—</div>
+              <div id="bp-stat-latest-chip"></div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">7-day average</div>
+              <div class="stat-value" id="bp-stat-avg">—</div>
+              <div class="stat-note" id="bp-stat-avg-note"></div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">This month</div>
+              <div class="stat-value" id="bp-stat-count">—</div>
+              <div class="stat-note" id="bp-stat-count-note"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="readings">
+        <div class="readings-head">
+          <h2 class="readings-title">Recent readings</h2>
+          <button class="readings-new-btn" id="bp-new-btn" aria-label="New blood pressure entry">New entry +</button>
+        </div>
+        <div class="table-area">
+          <table id="bp-table">
+            <thead>
+              <tr>
+                <th>Date</th><th>Systolic</th><th>Diastolic</th><th>Pulse</th>
+                <th>Category</th><th>Notes</th><th></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ── Weight ─────────────────────────────────────────────── -->
+    <section id="tab-weight" class="tab-content" role="tabpanel">
+
+      <div class="detail">
+        <div class="detail-head">
+          <h2 class="detail-title">Weight <em id="weight-detail-month"></em></h2>
+          <div class="range-seg" role="group" aria-label="Time range">
+            <button class="range-btn" data-range="1W">1W</button>
+            <button class="range-btn active" data-range="1M">1M</button>
+            <button class="range-btn" data-range="3M">3M</button>
+            <button class="range-btn" data-range="6M">6M</button>
+            <button class="range-btn" data-range="1Y">1Y</button>
+            <button class="range-btn" data-range="all">All</button>
+          </div>
+        </div>
+        <div class="detail-body">
+          <div class="chart-wrap">
+            <div class="chart-legend">
+              <div class="legend-item">
+                <span class="legend-dot" style="background:#6b5d8a" aria-hidden="true"></span>
+                Weight<span class="legend-val" id="weight-legend-val">—</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-dot legend-dot--dashed" style="background:#6b5d8a" aria-hidden="true"></span>
+                Goal<span class="legend-val" id="weight-legend-goal">—</span>
+              </div>
+            </div>
+            <canvas id="weight-chart"></canvas>
+          </div>
+          <div class="stat-col">
+            <div class="stat">
+              <div class="stat-label">Latest reading</div>
+              <div class="stat-value" id="weight-stat-latest">—</div>
+              <div class="stat-note" id="weight-stat-latest-note"></div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">7-day average</div>
+              <div class="stat-value" id="weight-stat-avg">—</div>
+              <div class="stat-note" id="weight-stat-avg-note"></div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">Goal</div>
+              <div class="stat-value" id="weight-stat-goal">—</div>
+              <button type="button" id="weight-goal-edit-btn" class="stat-edit-btn">Edit goal</button>
+              <div id="weight-goal-edit-row" class="goal-edit-row hidden">
+                <label class="sr-only" for="weight-goal-input">Target weight (kg)</label>
+                <input type="number" id="weight-goal-input" step="0.1" min="20" max="500" placeholder="kg" />
+                <button type="button" id="weight-goal-save">Set</button>
+                <div id="weight-goal-status" class="form-status"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="readings">
+        <div class="readings-head">
+          <h2 class="readings-title">Recent readings</h2>
+          <button class="readings-new-btn" id="weight-new-btn" aria-label="New weight entry">New entry +</button>
+        </div>
+        <div class="table-area">
+          <table id="weight-table">
+            <thead>
+              <tr><th>Date</th><th>Weight</th><th>Status</th><th>Notes</th><th></th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ── Steps ──────────────────────────────────────────────── -->
+    <section id="tab-steps" class="tab-content" role="tabpanel">
+
+      <div class="detail">
+        <div class="detail-head">
+          <h2 class="detail-title">Steps <em id="steps-detail-month"></em></h2>
+          <div class="range-seg" role="group" aria-label="Time range">
+            <button class="range-btn" data-range="1W">1W</button>
+            <button class="range-btn active" data-range="1M">1M</button>
+            <button class="range-btn" data-range="3M">3M</button>
+            <button class="range-btn" data-range="6M">6M</button>
+            <button class="range-btn" data-range="1Y">1Y</button>
+            <button class="range-btn" data-range="all">All</button>
+          </div>
+        </div>
+        <div class="detail-body">
+          <div class="chart-wrap">
+            <div class="chart-legend">
+              <div class="legend-item">
+                <span class="legend-dot" style="background:#5c7a52" aria-hidden="true"></span>
+                Steps<span class="legend-val" id="steps-legend-latest">—</span>
+              </div>
+              <div class="legend-item">
+                <span style="color:var(--muted)">7d avg</span>
+                <span class="legend-val" id="steps-legend-avg">—</span>
+              </div>
+            </div>
+            <canvas id="steps-chart"></canvas>
+            <canvas id="distance-chart" style="margin-top:1rem"></canvas>
+          </div>
+          <div class="stat-col">
+            <div class="stat">
+              <div class="stat-label">Today</div>
+              <div class="stat-value" id="steps-stat-latest">—</div>
+              <div id="steps-stat-latest-chip"></div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">7-day average</div>
+              <div class="stat-value" id="steps-stat-avg">—</div>
+              <div class="stat-note" id="steps-stat-avg-note"></div>
+            </div>
+            <div class="stat">
+              <div class="stat-label">This month</div>
+              <div class="stat-value" id="steps-stat-count">—</div>
+              <div class="stat-note" id="steps-stat-count-note"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="readings">
+        <div class="readings-head">
+          <h2 class="readings-title">Recent readings</h2>
+          <button class="readings-new-btn" id="steps-new-btn" aria-label="New steps entry">New entry +</button>
+        </div>
+        <div class="table-area">
+          <table id="steps-table">
+            <thead>
+              <tr><th>Date</th><th>Steps</th><th>Distance</th><th>Status</th><th>Notes</th><th></th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ── New Entry Modal ──────────────────────────────────────── -->
+  <div id="new-entry-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="new-entry-title">
+    <div class="modal-box modal-box--entry">
+      <div class="modal-header">
+        <h2 id="new-entry-title">New entry</h2>
+        <button id="new-entry-close" aria-label="Close">✕</button>
+      </div>
+      <div class="modal-body">
+        <!-- Metric selector (shown when opened from Overview) -->
+        <div id="new-entry-selector" class="metric-selector hidden">
+          <p class="metric-selector-label">What would you like to log?</p>
+          <div class="metric-selector-btns">
+            <button class="metric-select-btn" data-metric="blood-pressure">
+              <span class="metric-dot" style="background:#b6542a" aria-hidden="true"></span>Blood pressure
+            </button>
+            <button class="metric-select-btn" data-metric="weight">
+              <span class="metric-dot" style="background:#6b5d8a" aria-hidden="true"></span>Weight
+            </button>
+            <button class="metric-select-btn" data-metric="steps">
+              <span class="metric-dot" style="background:#5c7a52" aria-hidden="true"></span>Steps
+            </button>
+          </div>
+        </div>
+
+        <!-- BP form -->
+        <div id="new-entry-bp" class="new-entry-form hidden">
           <form id="bp-form" class="entry-form">
             <label>Date &amp; Time
               <input type="datetime-local" name="measured_at" required />
@@ -151,54 +419,13 @@
             <label>Notes
               <textarea name="notes" rows="2"></textarea>
             </label>
-            <button type="submit">Save</button>
+            <button type="submit">Save reading</button>
           </form>
           <div id="bp-form-status" class="form-status"></div>
-          <h3 style="margin-top:1rem;">Last 7 readings</h3>
-          <div class="bp-avg-block">
-            <div class="bp-avg-row">
-              <span class="bp-avg-label" style="color:#ef4444">Systolic</span>
-              <span id="bp-avg-sys7" class="bp-avg-value">—</span>
-              <span class="bp-avg-unit">mmHg</span>
-            </div>
-            <div class="bp-avg-row">
-              <span class="bp-avg-label" style="color:#3b82f6">Diastolic</span>
-              <span id="bp-avg-dia7" class="bp-avg-value">—</span>
-              <span class="bp-avg-unit">mmHg</span>
-            </div>
-          </div>
-        </aside>
-      </div>
-      <div class="table-area">
-        <table id="bp-table">
-          <thead>
-            <tr>
-              <th>Date</th><th>Sys</th><th>Dia</th><th>Pulse</th><th>Notes</th><th></th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- ── Weight ─────────────────────────────────────────────── -->
-    <section id="tab-weight" class="tab-content">
-      <h2>Weight</h2>
-      <div class="range-bar">
-        <button class="range-btn" data-range="1W">1W</button>
-        <button class="range-btn active" data-range="1M">1M</button>
-        <button class="range-btn" data-range="3M">3M</button>
-        <button class="range-btn" data-range="6M">6M</button>
-        <button class="range-btn" data-range="1Y">1Y</button>
-        <button class="range-btn" data-range="5Y">5Y</button>
-        <button class="range-btn" data-range="all">All</button>
-      </div>
-      <div class="tab-layout">
-        <div class="chart-area">
-          <canvas id="weight-chart"></canvas>
         </div>
-        <aside class="sidebar">
-          <h3>New Entry</h3>
+
+        <!-- Weight form -->
+        <div id="new-entry-weight" class="new-entry-form hidden">
           <form id="weight-form" class="entry-form">
             <label>Date &amp; Time
               <input type="datetime-local" name="measured_at" required />
@@ -209,48 +436,13 @@
             <label>Notes
               <textarea name="notes" rows="2"></textarea>
             </label>
-            <button type="submit">Save</button>
+            <button type="submit">Save reading</button>
           </form>
           <div id="weight-form-status" class="form-status"></div>
-          <h3 style="margin-top:1rem;">Goal</h3>
-          <div class="entry-form">
-            <label>Target (kg)
-              <input type="number" id="weight-goal-input" step="0.1" min="20" max="500" placeholder="e.g. 75.0" />
-            </label>
-            <button type="button" id="weight-goal-save">Set Goal</button>
-            <div id="weight-goal-status" class="form-status"></div>
-          </div>
-        </aside>
-      </div>
-      <div class="table-area">
-        <table id="weight-table">
-          <thead>
-            <tr><th>Date</th><th>Weight (kg)</th><th>Notes</th><th></th></tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </section>
-
-<!-- ── Steps ──────────────────────────────────────────────── -->
-    <section id="tab-steps" class="tab-content">
-      <h2>Steps</h2>
-      <div class="range-bar">
-        <button class="range-btn" data-range="1W">1W</button>
-        <button class="range-btn active" data-range="1M">1M</button>
-        <button class="range-btn" data-range="3M">3M</button>
-        <button class="range-btn" data-range="6M">6M</button>
-        <button class="range-btn" data-range="1Y">1Y</button>
-        <button class="range-btn" data-range="5Y">5Y</button>
-        <button class="range-btn" data-range="all">All</button>
-      </div>
-      <div class="tab-layout">
-        <div class="chart-area">
-          <canvas id="steps-chart"></canvas>
-          <canvas id="distance-chart" style="margin-top: 1.5rem;"></canvas>
         </div>
-        <aside class="sidebar">
-          <h3>New Entry</h3>
+
+        <!-- Steps form -->
+        <div id="new-entry-steps" class="new-entry-form hidden">
           <form id="steps-form" class="entry-form">
             <label>Date
               <input type="date" name="step_date" required />
@@ -264,22 +456,13 @@
             <label>Notes
               <textarea name="notes" rows="2"></textarea>
             </label>
-            <button type="submit">Save</button>
+            <button type="submit">Save reading</button>
           </form>
           <div id="steps-form-status" class="form-status"></div>
-        </aside>
+        </div>
       </div>
-      <div class="table-area">
-        <table id="steps-table">
-          <thead>
-            <tr><th>Date</th><th>Steps</th><th>Distance</th><th>Notes</th><th></th></tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </section>
-
-  </main>
+    </div>
+  </div>
 
   <!-- ── Help Modal ────────────────────────────────────────── -->
   <div id="help-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="help-modal-title">
@@ -328,10 +511,10 @@
         </p>
 
         <h3 class="help-section-title">Weight goal</h3>
-        <p>The weight goal is saved to your account on the server and is available on all devices. Set it in the <em>Weight</em> tab under the entry form.</p>
+        <p>Set your target weight in the <em>Weight</em> tab using the "Edit goal" button in the stat panel.</p>
 
         <h3 class="help-section-title">Time range selector</h3>
-        <p>Use the <strong>1W / 1M / 3M / 6M / 1Y / 5Y / All</strong> buttons at the top of each data tab to filter the chart and table. The full dataset is always kept — filtering is display-only.</p>
+        <p>Use the <strong>1W / 1M / 3M / 6M / 1Y / All</strong> buttons at the top of each data tab to filter the chart and table. The full dataset is always kept — filtering is display-only.</p>
       </div>
       <div class="modal-footer">
         <button id="help-modal-close-btn" class="btn-primary">Close</button>
@@ -361,7 +544,7 @@
         <h2 id="import-history-modal-title">Import History</h2>
         <button id="import-history-modal-close" aria-label="Close">✕</button>
       </div>
-      <div class="modal-body" id="import-history-list"><!-- filled by JS --></div>
+      <div class="modal-body" id="import-history-list"></div>
     </div>
   </div>
 
@@ -372,9 +555,7 @@
         <h2 id="modal-title">Import Results</h2>
         <button id="modal-close" aria-label="Close">✕</button>
       </div>
-      <div class="modal-body" id="modal-body">
-        <!-- populated by import.js -->
-      </div>
+      <div class="modal-body" id="modal-body"></div>
       <div class="modal-footer">
         <button id="modal-view-log" class="btn-secondary">View Log</button>
         <button id="modal-close-btn">Close</button>
@@ -393,10 +574,10 @@
           integrity="sha384-oNtu+d18330MVFpltUTve1DatxCkkctlpA2AC3GulbVFOSqhHdDat3qHse/Lbuek"
           crossorigin="anonymous"></script>
 
-  <script src="/js/auth.js?v=13"></script>
-  <script src="/js/app.js?v=13"></script>
-  <script src="/js/charts.js?v=13"></script>
-  <script src="/js/forms.js?v=13"></script>
-  <script src="/js/import.js?v=13"></script>
+  <script src="/js/auth.js?v=14"></script>
+  <script src="/js/app.js?v=14"></script>
+  <script src="/js/charts.js?v=14"></script>
+  <script src="/js/forms.js?v=14"></script>
+  <script src="/js/import.js?v=14"></script>
 </body>
 </html>

@@ -8,7 +8,7 @@ function makeDeleteBtn(endpoint, id, onDelete) {
   btn.addEventListener('click', async () => {
     if (!confirm('Delete this record?')) return;
     try {
-      await apiDelete(`${endpoint}/${id}`);
+      await apiDelete(endpoint + '/' + id);
       onDelete();
     } catch (err) {
       alert('Delete failed: ' + err.message);
@@ -17,8 +17,15 @@ function makeDeleteBtn(endpoint, id, onDelete) {
   return btn;
 }
 
-// ── Row colour classification helpers ────────────────────────
-/** Returns a CSS class name based on AHA blood pressure zones. */
+function _makeTagEl(cls, text) {
+  const span = document.createElement('span');
+  span.className = 'tag ' + cls;
+  span.textContent = text;
+  return span;
+}
+
+// ── Classification helpers ────────────────────────────────────
+/** Returns CSS class name based on AHA blood pressure zones. */
 function getBpClass(sys, dia) {
   if (sys >= 180 || dia >= 120) return 'bp-crisis';
   if (sys >= 140 || dia >= 90)  return 'bp-high2';
@@ -27,16 +34,16 @@ function getBpClass(sys, dia) {
   return 'bp-normal';
 }
 
-/** Returns a CSS class name based on weight relative to the user's goal (window._weightGoal). */
+/** Returns CSS class name based on weight vs goal. */
 function getWeightClass(kg) {
   const goal = window._weightGoal;
   if (!goal) return '';
-  if (kg <= goal)          return 'wt-ok';
-  if (kg <= goal * 1.05)   return 'wt-warn';
+  if (kg <= goal)        return 'wt-ok';
+  if (kg <= goal * 1.05) return 'wt-warn';
   return 'wt-over';
 }
 
-/** Returns a CSS class name based on daily step-count thresholds. */
+/** Returns CSS class name based on daily step-count thresholds. */
 function getStepsClass(count) {
   if (count >= 10000) return 'steps-great';
   if (count >= 7500)  return 'steps-good';
@@ -44,13 +51,86 @@ function getStepsClass(count) {
   return 'steps-low';
 }
 
+function _bpTagEl(sys, dia) {
+  const cls = getBpClass(sys, dia).replace('bp-', '');
+  const labels = { normal: 'Normal', elevated: 'Elevated', high1: 'High I', high2: 'High II', crisis: 'Crisis' };
+  return labels[cls] ? _makeTagEl(cls, labels[cls]) : null;
+}
+
+function _weightTagEl(kg) {
+  const cls = getWeightClass(kg);
+  if (!cls) return null;
+  const map = { 'wt-ok': ['goal-ok', 'On track'], 'wt-warn': ['goal-warn', 'Near limit'], 'wt-over': ['goal-over', 'Over goal'] };
+  const [tCls, text] = map[cls] || [];
+  return tCls ? _makeTagEl(tCls, text) : null;
+}
+
+function _stepsTagEl(count) {
+  const cls = getStepsClass(count).replace('steps-', '');
+  const labels = { great: '≥ 10k', good: '7.5–10k', ok: '5–7.5k', low: '< 5k' };
+  return labels[cls] ? _makeTagEl('steps-' + cls, labels[cls]) : null;
+}
+
 // ── Range state ───────────────────────────────────────────────
 const ranges = { bp: '1M', weight: '1M', steps: '1M' };
 
 function _setRangeActive(tabId, range) {
-  document.querySelectorAll(`#${tabId} .range-btn`).forEach(b =>
+  document.querySelectorAll('#' + tabId + ' .range-btn').forEach(b =>
     b.classList.toggle('active', b.dataset.range === range));
 }
+
+// ── New Entry Modal ───────────────────────────────────────────
+const newEntryModal    = document.getElementById('new-entry-modal');
+const newEntrySelector = document.getElementById('new-entry-selector');
+const newEntryForms    = { 'blood-pressure': 'new-entry-bp', weight: 'new-entry-weight', steps: 'new-entry-steps' };
+
+function openNewEntryModal(metric) {
+  // metric: 'blood-pressure' | 'weight' | 'steps' | 'overview'
+  Object.values(newEntryForms).forEach(id =>
+    document.getElementById(id)?.classList.add('hidden'));
+
+  if (!metric || metric === 'overview') {
+    newEntrySelector?.classList.remove('hidden');
+  } else {
+    newEntrySelector?.classList.add('hidden');
+    document.getElementById(newEntryForms[metric])?.classList.remove('hidden');
+  }
+  newEntryModal?.classList.remove('hidden');
+}
+
+function closeNewEntryModal() {
+  newEntryModal?.classList.add('hidden');
+  // Reset back to selector for next open
+  newEntrySelector?.classList.remove('hidden');
+  Object.values(newEntryForms).forEach(id =>
+    document.getElementById(id)?.classList.add('hidden'));
+}
+
+// Close triggers
+document.getElementById('new-entry-close')?.addEventListener('click', closeNewEntryModal);
+newEntryModal?.addEventListener('click', e => { if (e.target === newEntryModal) closeNewEntryModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeNewEntryModal(); });
+
+// Hero "New entry" button — show selector (opened from Overview tab)
+document.getElementById('new-entry-btn')?.addEventListener('click', () => {
+  const activeTab = document.querySelector('.tab-btn.active')?.dataset.tab;
+  openNewEntryModal(activeTab === 'dashboard' ? 'overview' : activeTab);
+});
+
+// Per-metric "New entry +" buttons
+document.getElementById('bp-new-btn')?.addEventListener('click',     () => openNewEntryModal('blood-pressure'));
+document.getElementById('weight-new-btn')?.addEventListener('click', () => openNewEntryModal('weight'));
+document.getElementById('steps-new-btn')?.addEventListener('click',  () => openNewEntryModal('steps'));
+
+// Metric selector buttons inside modal
+document.querySelectorAll('.metric-select-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const metric = btn.dataset.metric;
+    newEntrySelector?.classList.add('hidden');
+    Object.entries(newEntryForms).forEach(([m, id]) =>
+      document.getElementById(id)?.classList.toggle('hidden', m !== metric));
+  });
+});
 
 // ── Blood Pressure ────────────────────────────────────────────
 
@@ -65,36 +145,46 @@ function applyBpRange() {
   const filtered = filterRange(window._bpData, 'measured_at', ranges.bp);
   renderBpTable(filtered);
   buildBpChart(filtered);
-  _updateBpAvg7(filtered);
-}
-
-function _updateBpAvg7(filtered) {
-  const recent7 = (filtered || []).slice(0, 7);
-  const avgSys = avg(recent7.map(r => r.systolic));
-  const avgDia = avg(recent7.map(r => r.diastolic));
-  document.getElementById('bp-avg-sys7').textContent = avgSys != null ? avgSys.toFixed(0) : '—';
-  document.getElementById('bp-avg-dia7').textContent = avgDia != null ? avgDia.toFixed(0) : '—';
 }
 
 function renderBpTable(records) {
   const tbody = document.querySelector('#bp-table tbody');
   if (!records.length) {
-    const msg = window._bpData && window._bpData.length ? 'No records in selected range' : 'No records yet';
-    tbody.innerHTML = `<tr class="empty-row"><td colspan="6">${msg}</td></tr>`;
+    const msg = window._bpData?.length ? 'No records in selected range' : 'No records yet';
+    const tr = document.createElement('tr');
+    tr.className = 'empty-row';
+    const td = document.createElement('td');
+    td.colSpan = 7; td.textContent = msg;
+    tr.appendChild(td); tbody.replaceChildren(tr);
     return;
   }
-  tbody.innerHTML = '';
+  tbody.replaceChildren();
   records.forEach(r => {
     const tr = document.createElement('tr');
-    tr.className = getBpClass(r.systolic, r.diastolic);
-    tr.innerHTML = `
-      <td>${fmtDatetime(r.measured_at)}</td>
-      <td>${r.systolic}</td>
-      <td>${r.diastolic}</td>
-      <td>${r.pulse ?? '—'}</td>
-      <td>${escHtml(r.notes ?? '')}</td>
-      <td></td>`;
-    tr.lastElementChild.appendChild(makeDeleteBtn('/api/v1/blood-pressure', r.id, loadBpData));
+
+    const tdDate = document.createElement('td');
+    tdDate.textContent = fmtDatetime(r.measured_at);
+
+    const tdSys = document.createElement('td');
+    tdSys.className = 'num'; tdSys.textContent = r.systolic;
+
+    const tdDia = document.createElement('td');
+    tdDia.className = 'num'; tdDia.textContent = r.diastolic;
+
+    const tdPulse = document.createElement('td');
+    tdPulse.className = 'num'; tdPulse.textContent = r.pulse ?? '—';
+
+    const tdCat = document.createElement('td');
+    const chip = _bpTagEl(r.systolic, r.diastolic);
+    if (chip) tdCat.appendChild(chip);
+
+    const tdNotes = document.createElement('td');
+    tdNotes.className = 'notes'; tdNotes.textContent = r.notes ?? '';
+
+    const tdDel = document.createElement('td');
+    tdDel.appendChild(makeDeleteBtn('/api/v1/blood-pressure', r.id, loadBpData));
+
+    tr.append(tdDate, tdSys, tdDia, tdPulse, tdCat, tdNotes, tdDel);
     tbody.appendChild(tr);
   });
 }
@@ -114,6 +204,7 @@ document.getElementById('bp-form').addEventListener('submit', async (e) => {
     await apiPost('/api/v1/blood-pressure', body);
     setStatus(status, 'Saved!');
     e.target.reset();
+    closeNewEntryModal();
     await loadBpData();
   } catch (err) {
     setStatus(status, err.message, true);
@@ -146,20 +237,35 @@ function applyWeightRange() {
 function renderWeightTable(records) {
   const tbody = document.querySelector('#weight-table tbody');
   if (!records.length) {
-    const msg = window._weightData && window._weightData.length ? 'No records in selected range' : 'No records yet';
-    tbody.innerHTML = `<tr class="empty-row"><td colspan="4">${msg}</td></tr>`;
+    const msg = window._weightData?.length ? 'No records in selected range' : 'No records yet';
+    const tr = document.createElement('tr');
+    tr.className = 'empty-row';
+    const td = document.createElement('td');
+    td.colSpan = 5; td.textContent = msg;
+    tr.appendChild(td); tbody.replaceChildren(tr);
     return;
   }
-  tbody.innerHTML = '';
+  tbody.replaceChildren();
   records.forEach(r => {
     const tr = document.createElement('tr');
-    tr.className = getWeightClass(r.value_kg);
-    tr.innerHTML = `
-      <td>${fmtDatetime(r.measured_at)}</td>
-      <td>${r.value_kg.toFixed(1)}</td>
-      <td>${escHtml(r.notes ?? '')}</td>
-      <td></td>`;
-    tr.lastElementChild.appendChild(makeDeleteBtn('/api/v1/weight', r.id, loadWeightData));
+
+    const tdDate = document.createElement('td');
+    tdDate.textContent = fmtDatetime(r.measured_at);
+
+    const tdWt = document.createElement('td');
+    tdWt.className = 'num'; tdWt.textContent = r.value_kg.toFixed(1);
+
+    const tdStatus = document.createElement('td');
+    const chip = _weightTagEl(r.value_kg);
+    if (chip) tdStatus.appendChild(chip);
+
+    const tdNotes = document.createElement('td');
+    tdNotes.className = 'notes'; tdNotes.textContent = r.notes ?? '';
+
+    const tdDel = document.createElement('td');
+    tdDel.appendChild(makeDeleteBtn('/api/v1/weight', r.id, loadWeightData));
+
+    tr.append(tdDate, tdWt, tdStatus, tdNotes, tdDel);
     tbody.appendChild(tr);
   });
 }
@@ -168,6 +274,15 @@ function renderWeightTable(records) {
 function updateWeightGoalInput(goal) {
   if (goal != null) document.getElementById('weight-goal-input').value = goal;
 }
+
+document.getElementById('weight-goal-edit-btn')?.addEventListener('click', () => {
+  const row = document.getElementById('weight-goal-edit-row');
+  const btn = document.getElementById('weight-goal-edit-btn');
+  if (!row) return;
+  const open = !row.classList.contains('hidden');
+  row.classList.toggle('hidden', open);
+  btn.textContent = open ? 'Edit goal' : 'Cancel';
+});
 
 document.getElementById('weight-goal-save').addEventListener('click', async () => {
   const val = parseFloat(document.getElementById('weight-goal-input').value);
@@ -178,6 +293,10 @@ document.getElementById('weight-goal-save').addEventListener('click', async () =
     window._weightGoal = user.weight_goal;
     window._weightData && applyWeightRange();
     setStatus(status, 'Goal saved!');
+    // collapse edit row
+    document.getElementById('weight-goal-edit-row')?.classList.add('hidden');
+    document.getElementById('weight-goal-edit-btn')?.textContent === 'Cancel' &&
+      (document.getElementById('weight-goal-edit-btn').textContent = 'Edit goal');
   } catch (err) {
     setStatus(status, err.message, true);
   }
@@ -196,6 +315,7 @@ document.getElementById('weight-form').addEventListener('submit', async (e) => {
     await apiPost('/api/v1/weight', body);
     setStatus(status, 'Saved!');
     e.target.reset();
+    closeNewEntryModal();
     await loadWeightData();
   } catch (err) {
     setStatus(status, err.message, true);
@@ -229,21 +349,39 @@ function applyStepsRange() {
 function renderStepsTable(records) {
   const tbody = document.querySelector('#steps-table tbody');
   if (!records.length) {
-    const msg = window._stepsData && window._stepsData.length ? 'No records in selected range' : 'No records yet';
-    tbody.innerHTML = `<tr class="empty-row"><td colspan="5">${msg}</td></tr>`;
+    const msg = window._stepsData?.length ? 'No records in selected range' : 'No records yet';
+    const tr = document.createElement('tr');
+    tr.className = 'empty-row';
+    const td = document.createElement('td');
+    td.colSpan = 6; td.textContent = msg;
+    tr.appendChild(td); tbody.replaceChildren(tr);
     return;
   }
-  tbody.innerHTML = '';
+  tbody.replaceChildren();
   records.forEach(r => {
-    const distKm = r.distance_m != null ? (r.distance_m / 1000).toFixed(2) + ' km' : '—';
     const tr = document.createElement('tr');
-    tr.className = getStepsClass(r.step_count);
-    [r.step_date, r.step_count.toLocaleString(), distKm, r.notes ?? '', ''].forEach((val, i) => {
-      const td = document.createElement('td');
-      if (i < 4) td.textContent = val;
-      tr.appendChild(td);
-    });
-    tr.lastElementChild.appendChild(makeDeleteBtn('/api/v1/steps', r.id, loadStepsData));
+    const distKm = r.distance_m != null ? (r.distance_m / 1000).toFixed(2) + ' km' : '—';
+
+    const tdDate = document.createElement('td');
+    tdDate.textContent = r.step_date;
+
+    const tdSteps = document.createElement('td');
+    tdSteps.className = 'num'; tdSteps.textContent = r.step_count.toLocaleString();
+
+    const tdDist = document.createElement('td');
+    tdDist.className = 'num'; tdDist.textContent = distKm;
+
+    const tdStatus = document.createElement('td');
+    const chip = _stepsTagEl(r.step_count);
+    if (chip) tdStatus.appendChild(chip);
+
+    const tdNotes = document.createElement('td');
+    tdNotes.className = 'notes'; tdNotes.textContent = r.notes ?? '';
+
+    const tdDel = document.createElement('td');
+    tdDel.appendChild(makeDeleteBtn('/api/v1/steps', r.id, loadStepsData));
+
+    tr.append(tdDate, tdSteps, tdDist, tdStatus, tdNotes, tdDel);
     tbody.appendChild(tr);
   });
 }
@@ -263,6 +401,7 @@ document.getElementById('steps-form').addEventListener('submit', async (e) => {
     await apiPost('/api/v1/steps', body);
     setStatus(status, 'Saved!');
     e.target.reset();
+    closeNewEntryModal();
     await loadStepsData();
   } catch (err) {
     setStatus(status, err.message, true);
@@ -285,6 +424,4 @@ window.addEventListener('tabchange', async (e) => {
   if (tab === 'steps')          await loadStepsData().catch(console.error);
 });
 
-// Expose apply helpers so charts.js tabchange can use them, and
-// updateWeightGoalInput so auth.js can populate it after login.
-Object.assign(window, { applyBpRange, applyWeightRange, applyStepsRange, updateWeightGoalInput });
+Object.assign(window, { applyBpRange, applyWeightRange, applyStepsRange, updateWeightGoalInput, getBpClass, getWeightClass, getStepsClass });

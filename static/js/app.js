@@ -14,7 +14,7 @@ function showTab(name, fireEvent = true) {
 
 tabBtns.forEach(btn => btn.addEventListener('click', () => showTab(btn.dataset.tab)));
 
-document.querySelector('.dashboard-cards').addEventListener('click', e => {
+document.querySelector('.metrics').addEventListener('click', e => {
   const card = e.target.closest('[data-nav-tab]');
   if (card) showTab(card.dataset.navTab);
 });
@@ -66,7 +66,11 @@ async function apiDelete(path)       { return apiFetch(path, { method: 'DELETE' 
 function fmtDatetime(iso) {
   if (!iso) return '—';
   const d = new Date(iso);
-  return d.toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' });
+  const mon = d.toLocaleString('default', { month: 'short' });
+  const day = d.getDate();
+  const hh  = String(d.getHours()).padStart(2, '0');
+  const mm  = String(d.getMinutes()).padStart(2, '0');
+  return `${mon} ${day} · ${hh}:${mm}`;
 }
 
 function fmtDate(str) {

@@ -150,11 +150,24 @@ logoutBtn.addEventListener('click', logout);
   }
 })();
 
-// ── Avatar upload ─────────────────────────────────────────────
-['header-avatar', 'header-avatar-placeholder', 'change-avatar-btn'].forEach(id => {
-  document.getElementById(id).addEventListener('click', () =>
-    document.getElementById('avatar-file-input').click()
-  );
+// ── Avatar dropdown ───────────────────────────────────────────
+const avatarDropdown = document.getElementById('avatar-dropdown');
+
+function _toggleAvatarDropdown(e) {
+  e.stopPropagation();
+  avatarDropdown?.classList.toggle('hidden');
+}
+function _closeAvatarDropdown() { avatarDropdown?.classList.add('hidden'); }
+
+document.getElementById('header-avatar')?.addEventListener('click', _toggleAvatarDropdown);
+document.getElementById('header-avatar-placeholder')?.addEventListener('click', _toggleAvatarDropdown);
+avatarDropdown?.addEventListener('click', e => e.stopPropagation());
+document.addEventListener('click', _closeAvatarDropdown);
+
+// Change avatar: trigger file input and close dropdown
+document.getElementById('change-avatar-btn')?.addEventListener('click', () => {
+  _closeAvatarDropdown();
+  document.getElementById('avatar-file-input')?.click();
 });
 
 document.getElementById('avatar-file-input').addEventListener('change', async (e) => {
