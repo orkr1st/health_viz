@@ -120,10 +120,51 @@ function avg(arr) {
   return arr.length ? arr.reduce((s, v) => s + v, 0) / arr.length : null;
 }
 
+// ── Aggregation helpers ───────────────────────────────────────
+function _weekStart(d) {
+  const date = new Date(typeof d === 'string' && d.length === 10 ? d + 'T00:00:00' : d);
+  const day  = date.getDay();
+  date.setDate(date.getDate() + (day === 0 ? -6 : 1 - day));
+  return date.toISOString().slice(0, 10);
+}
+
+function aggregateRecords(records, dateField, level) {
+  if (!level || level === 'none' || !records.length) return records;
+  const getKey = r => {
+    const src = r[dateField];
+    const d   = new Date(typeof src === 'string' && src.length === 10 ? src + 'T00:00:00' : src);
+    if (level === 'day')   return d.toISOString().slice(0, 10);
+    if (level === 'week')  return _weekStart(d);
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-01';
+  };
+  const groups = new Map();
+  records.forEach(r => {
+    const k = getKey(r);
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k).push(r);
+  });
+  const numFields = Object.keys(records[0]).filter(k =>
+    k !== 'id' && k !== dateField && records.some(r => typeof r[k] === 'number')
+  );
+  return [...groups.entries()].sort(([a], [b]) => a < b ? -1 : 1).map(([key, recs]) => {
+    const agg = { [dateField]: key };
+    numFields.forEach(f => {
+      const vals = recs.map(r => r[f]).filter(v => v != null);
+      agg[f] = vals.length ? vals.reduce((s, v) => s + v, 0) / vals.length : null;
+    });
+    return agg;
+  });
+}
+
+function rangeAggLevel(range) {
+  return { '1W': 'none', '1M': 'day', '3M': 'week', '6M': 'week', '1Y': 'month', '5Y': 'month', 'all': 'month' }[range] ?? 'none';
+}
+
 // Make helpers global so other scripts can use them
 Object.assign(window, {
   apiFetch, apiGet, apiPost, apiPut, apiDelete,
   fmtDatetime, fmtDate, setStatus, last30Days, last7Days, avg, filterRange, escHtml,
+  aggregateRecords, rangeAggLevel,
 });
 
 // Show dashboard on load (no tabchange — authReady handles initial data load)

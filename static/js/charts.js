@@ -25,6 +25,21 @@ function destroyChart(ref) {
   if (ref && ref.chart) { ref.chart.destroy(); ref.chart = null; }
 }
 
+function _xScale(aggLevel) {
+  if (aggLevel === 'month') return {
+    type: 'time', time: { unit: 'month', tooltipFormat: 'MMM yyyy' },
+    ticks: { maxTicksLimit: 8, font: { family: "'JetBrains Mono', monospace", size: 10 }, color: '#8a7d70' },
+    grid: { display: false }, border: { display: false },
+  };
+  if (aggLevel === 'week') return {
+    type: 'time', time: { unit: 'week', tooltipFormat: 'dd MMM yyyy' },
+    ticks: { maxTicksLimit: 8, font: { family: "'JetBrains Mono', monospace", size: 10 }, color: '#8a7d70' },
+    grid: { display: false }, border: { display: false },
+  };
+  if (aggLevel === 'day') return TIME_SCALE_DAY;
+  return TIME_SCALE;
+}
+
 // ── DOM helpers ───────────────────────────────────────────────
 
 function _setText(id, val) {
@@ -253,25 +268,32 @@ async function loadDashboard() {
 // ── Blood Pressure full chart ─────────────────────────────────
 let bpChart = null;
 
-function buildBpChart(records) {
-  const sorted  = [...records].reverse();
-  const sysVals = sorted.map(r => r.systolic);
-  const diaVals = sorted.map(r => r.diastolic);
-  const avgSys7 = rollingAvg(sysVals, 7);
-  const avgDia7 = rollingAvg(diaVals, 7);
+function buildBpChart(records, range) {
+  const aggLevel = rangeAggLevel(range ?? '1W');
+  const isAgg    = aggLevel !== 'none';
+  const sorted   = isAgg ? aggregateRecords(records, 'measured_at', aggLevel) : [...records].reverse();
+
+  const datasets = [
+    { label: 'Systolic',  data: sorted.map(r => ({ x: r.measured_at, y: Math.round(r.systolic) })),  borderColor: '#b6542a', borderWidth: 2, fill: false, tension: 0, pointRadius: isAgg ? 3 : 2.5, borderCapStyle: 'round' },
+    { label: 'Diastolic', data: sorted.map(r => ({ x: r.measured_at, y: Math.round(r.diastolic) })), borderColor: '#d9a48a', borderWidth: 2, fill: false, tension: 0, pointRadius: isAgg ? 3 : 2.5, borderCapStyle: 'round' },
+    { label: 'Pulse', data: sorted.filter(r => r.pulse != null).map(r => ({ x: r.measured_at, y: Math.round(r.pulse) })), borderColor: 'rgba(138,125,112,0.55)', borderWidth: 1.5, borderDash: [4, 4], fill: false, tension: 0, pointRadius: 0 },
+  ];
+
+  if (!isAgg) {
+    const sysVals = sorted.map(r => r.systolic);
+    const diaVals = sorted.map(r => r.diastolic);
+    const avgSys7 = rollingAvg(sysVals, 7);
+    const avgDia7 = rollingAvg(diaVals, 7);
+    datasets.push(
+      { label: 'Sys 7d', data: sorted.map((r, i) => ({ x: r.measured_at, y: +avgSys7[i].toFixed(1) })), borderColor: 'rgba(182,84,42,0.4)', borderDash: [6, 3], borderWidth: 1.5, fill: false, tension: 0.3, pointRadius: 0 },
+      { label: 'Dia 7d', data: sorted.map((r, i) => ({ x: r.measured_at, y: +avgDia7[i].toFixed(1) })), borderColor: 'rgba(217,164,138,0.5)', borderDash: [6, 3], borderWidth: 1.5, fill: false, tension: 0.3, pointRadius: 0 },
+    );
+  }
 
   if (bpChart) { bpChart.destroy(); }
   bpChart = new Chart(document.getElementById('bp-chart'), {
     type: 'line',
-    data: {
-      datasets: [
-        { label: 'Systolic',  data: sorted.map(r => ({ x: r.measured_at, y: r.systolic })),  borderColor: '#b6542a', borderWidth: 2, fill: false, tension: 0, pointRadius: 2.5, borderCapStyle: 'round' },
-        { label: 'Diastolic', data: sorted.map(r => ({ x: r.measured_at, y: r.diastolic })), borderColor: '#d9a48a', borderWidth: 2, fill: false, tension: 0, pointRadius: 2.5, borderCapStyle: 'round' },
-        { label: 'Pulse',     data: sorted.filter(r => r.pulse).map(r => ({ x: r.measured_at, y: r.pulse })), borderColor: 'rgba(138,125,112,0.55)', borderWidth: 1.5, borderDash: [4, 4], fill: false, tension: 0, pointRadius: 0 },
-        { label: 'Sys 7d',    data: sorted.map((r, i) => ({ x: r.measured_at, y: +avgSys7[i].toFixed(1) })), borderColor: 'rgba(182,84,42,0.4)', borderDash: [6, 3], borderWidth: 1.5, fill: false, tension: 0.3, pointRadius: 0 },
-        { label: 'Dia 7d',    data: sorted.map((r, i) => ({ x: r.measured_at, y: +avgDia7[i].toFixed(1) })), borderColor: 'rgba(217,164,138,0.5)', borderDash: [6, 3], borderWidth: 1.5, fill: false, tension: 0.3, pointRadius: 0 },
-      ],
-    },
+    data: { datasets },
     options: {
       responsive: true,
       plugins: {
@@ -284,7 +306,7 @@ function buildBpChart(records) {
           },
         },
       },
-      scales: { x: TIME_SCALE, y: Y_SCALE },
+      scales: { x: _xScale(aggLevel), y: Y_SCALE },
     },
   });
 
@@ -330,11 +352,13 @@ function rollingAvg(arr, n) {
   });
 }
 
-function buildWeightChart(records) {
-  const sorted = [...records].reverse();
-  const values = sorted.map(r => r.value_kg);
-  const avg7   = rollingAvg(values, 7);
-  const goal   = window._weightGoal ?? NaN;
+function buildWeightChart(records, range) {
+  const aggLevel = rangeAggLevel(range ?? '1W');
+  const isAgg    = aggLevel !== 'none';
+  const sorted   = isAgg ? aggregateRecords(records, 'measured_at', aggLevel) : [...records].reverse();
+  const values   = sorted.map(r => r.value_kg);
+  const avg7     = isAgg ? null : rollingAvg(values, 7);
+  const goal     = window._weightGoal ?? NaN;
   const annotations = {};
   if (!isNaN(goal) && goal > 0) {
     annotations.goalLine = {
@@ -343,19 +367,20 @@ function buildWeightChart(records) {
       label: { display: true, content: 'Goal: ' + goal + ' kg', position: 'start', color: '#6b5d8a', backgroundColor: 'rgba(0,0,0,0)', font: { size: 11, family: "'JetBrains Mono', monospace" } },
     };
   }
+  const datasets = [
+    { label: 'Weight', data: sorted.map((r, i) => ({ x: r.measured_at, y: +values[i].toFixed(2) })), borderColor: '#6b5d8a', borderWidth: 2, backgroundColor: 'rgba(107,93,138,0.06)', fill: true, tension: 0, pointRadius: isAgg ? 3 : 2.5, borderCapStyle: 'round' },
+  ];
+  if (!isAgg && avg7) {
+    datasets.push({ label: '7d avg', data: sorted.map((r, i) => ({ x: r.measured_at, y: +avg7[i].toFixed(2) })), borderColor: 'rgba(107,93,138,0.45)', borderDash: [6, 3], borderWidth: 1.5, fill: false, tension: 0.3, pointRadius: 0 });
+  }
   if (weightChart) { weightChart.destroy(); }
   weightChart = new Chart(document.getElementById('weight-chart'), {
     type: 'line',
-    data: {
-      datasets: [
-        { label: 'Weight', data: sorted.map((r, i) => ({ x: r.measured_at, y: values[i] })), borderColor: '#6b5d8a', borderWidth: 2, backgroundColor: 'rgba(107,93,138,0.06)', fill: true, tension: 0, pointRadius: 2.5, borderCapStyle: 'round' },
-        { label: '7d avg', data: sorted.map((r, i) => ({ x: r.measured_at, y: +avg7[i].toFixed(2) })), borderColor: 'rgba(107,93,138,0.45)', borderDash: [6, 3], borderWidth: 1.5, fill: false, tension: 0.3, pointRadius: 0 },
-      ],
-    },
+    data: { datasets },
     options: {
       responsive: true,
       plugins: { legend: { display: false }, annotation: { annotations } },
-      scales: { x: TIME_SCALE, y: Y_SCALE },
+      scales: { x: _xScale(aggLevel), y: Y_SCALE },
     },
   });
 
@@ -388,27 +413,30 @@ function _updateWeightStats(records) {
 // ── Steps chart ───────────────────────────────────────────────
 let stepsChart = null;
 
-function buildStepsChart(records) {
-  const sorted = [...records].reverse();
+function buildStepsChart(records, range) {
+  const aggLevel = rangeAggLevel(range ?? '1W');
+  const isAgg    = aggLevel !== 'none';
+  const sorted   = isAgg ? aggregateRecords(records, 'step_date', aggLevel) : [...records].reverse();
   if (stepsChart) { stepsChart.destroy(); }
   stepsChart = new Chart(document.getElementById('steps-chart'), {
     type: 'bar',
     data: {
       datasets: [{
         label: 'Steps',
-        data: sorted.map(r => ({ x: r.step_date, y: r.step_count })),
-        backgroundColor: sorted.map(r =>
-          r.step_count >= 10000 ? 'rgba(92,122,82,0.80)' :
-          r.step_count >= 7500  ? 'rgba(92,122,82,0.60)' :
-          r.step_count >= 5000  ? 'rgba(182,84,42,0.45)' : 'rgba(182,84,42,0.65)'
-        ),
+        data: sorted.map(r => ({ x: r.step_date, y: Math.round(r.step_count) })),
+        backgroundColor: sorted.map(r => {
+          const v = r.step_count;
+          return v >= 10000 ? 'rgba(92,122,82,0.80)' :
+                 v >= 7500  ? 'rgba(92,122,82,0.60)' :
+                 v >= 5000  ? 'rgba(182,84,42,0.45)' : 'rgba(182,84,42,0.65)';
+        }),
         borderRadius: 3, borderSkipped: false,
       }],
     },
     options: {
       responsive: true,
       plugins: { legend: { display: false } },
-      scales: { x: TIME_SCALE_DAY, y: { ...Y_SCALE, beginAtZero: true } },
+      scales: { x: isAgg ? _xScale(aggLevel) : TIME_SCALE_DAY, y: { ...Y_SCALE, beginAtZero: true } },
     },
   });
 
@@ -443,8 +471,11 @@ function _updateStepsStats(records) {
 // ── Distance chart ────────────────────────────────────────────
 let distanceChart = null;
 
-function buildDistanceChart(records) {
-  const sorted = [...records].reverse().filter(r => r.distance_m != null);
+function buildDistanceChart(records, range) {
+  const aggLevel = rangeAggLevel(range ?? '1W');
+  const isAgg    = aggLevel !== 'none';
+  const base     = records.filter(r => r.distance_m != null);
+  const sorted   = isAgg ? aggregateRecords(base, 'step_date', aggLevel) : [...base].reverse();
   if (distanceChart) { distanceChart.destroy(); }
   distanceChart = new Chart(document.getElementById('distance-chart'), {
     type: 'line',
@@ -453,13 +484,13 @@ function buildDistanceChart(records) {
         label: 'Distance (km)',
         data: sorted.map(r => ({ x: r.step_date, y: +(r.distance_m / 1000).toFixed(2) })),
         borderColor: 'rgba(92,122,82,0.7)', backgroundColor: 'rgba(92,122,82,0.07)',
-        fill: true, tension: 0.3, pointRadius: 2, borderCapStyle: 'round',
+        fill: true, tension: 0.3, pointRadius: isAgg ? 3 : 2, borderCapStyle: 'round',
       }],
     },
     options: {
       responsive: true,
       plugins: { legend: { display: false } },
-      scales: { x: TIME_SCALE_DAY, y: { ...Y_SCALE, beginAtZero: true } },
+      scales: { x: isAgg ? _xScale(aggLevel) : TIME_SCALE_DAY, y: { ...Y_SCALE, beginAtZero: true } },
     },
   });
 }

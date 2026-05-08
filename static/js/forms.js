@@ -144,7 +144,7 @@ function applyBpRange() {
   if (!window._bpData) return;
   const filtered = filterRange(window._bpData, 'measured_at', ranges.bp);
   renderBpTable(filtered);
-  buildBpChart(filtered);
+  buildBpChart(filtered, ranges.bp);
 }
 
 function renderBpTable(records) {
@@ -231,7 +231,7 @@ function applyWeightRange() {
   if (!window._weightData) return;
   const filtered = filterRange(window._weightData, 'measured_at', ranges.weight);
   renderWeightTable(filtered);
-  buildWeightChart(filtered);
+  buildWeightChart(filtered, ranges.weight);
 }
 
 function renderWeightTable(records) {
@@ -342,8 +342,8 @@ function applyStepsRange() {
   if (!window._stepsData) return;
   const filtered = filterRange(window._stepsData, 'step_date', ranges.steps);
   renderStepsTable(filtered);
-  buildStepsChart(filtered);
-  buildDistanceChart(filtered);
+  buildStepsChart(filtered, ranges.steps);
+  buildDistanceChart(filtered, ranges.steps);
 }
 
 function renderStepsTable(records) {
