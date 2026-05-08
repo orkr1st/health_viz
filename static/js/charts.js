@@ -295,7 +295,7 @@ function buildBpChart(records, range) {
     type: 'line',
     data: { datasets },
     options: {
-      responsive: true,
+      responsive: true, maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
         annotation: {
@@ -378,7 +378,7 @@ function buildWeightChart(records, range) {
     type: 'line',
     data: { datasets },
     options: {
-      responsive: true,
+      responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false }, annotation: { annotations } },
       scales: { x: _xScale(aggLevel), y: Y_SCALE },
     },
@@ -434,7 +434,7 @@ function buildStepsChart(records, range) {
       }],
     },
     options: {
-      responsive: true,
+      responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: { x: isAgg ? _xScale(aggLevel) : TIME_SCALE_DAY, y: { ...Y_SCALE, beginAtZero: true } },
     },
@@ -488,7 +488,7 @@ function buildDistanceChart(records, range) {
       }],
     },
     options: {
-      responsive: true,
+      responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false } },
       scales: { x: isAgg ? _xScale(aggLevel) : TIME_SCALE_DAY, y: { ...Y_SCALE, beginAtZero: true } },
     },
