@@ -305,7 +305,8 @@ main { max-width: 1400px; margin: 0 auto; }
 .metric-caption { font-size: 12px; color: var(--muted); margin-bottom: 20px; line-height: 1.4; }
 .metric-caption strong { color: var(--ink-soft); font-weight: 500; }
 
-.spark { width: 100%; height: 48px; display: block; }
+.spark-wrap { position: relative; height: 48px; width: 100%; }
+.spark { width: 100%; height: 100%; display: block; }
 
 /* ── Detail card ──────────────────────────────────────────────── */
 .detail {
@@ -355,10 +356,9 @@ main { max-width: 1400px; margin: 0 auto; }
 }
 
 .chart-wrap { min-width: 0; display: flex; flex-direction: column; gap: 16px; }
-
-/* Explicit heights prevent Chart.js from stretching in flex/grid containers */
-#bp-chart, #weight-chart, #steps-chart { height: 260px; }
-#distance-chart { height: 180px; }
+/* position:relative + explicit height on the wrapper is what Chart.js reads for maintainAspectRatio:false */
+.chart-canvas-wrap { position: relative; height: 260px; width: 100%; }
+.chart-canvas-wrap--sm { height: 180px; }
 
 .chart-legend { display: flex; align-items: center; gap: 20px; font-size: 12px; color: var(--muted); flex-wrap: wrap; }
 

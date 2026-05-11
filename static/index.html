@@ -133,7 +133,7 @@
           </div>
           <div class="metric-value" id="metric-bp-value">—<span class="unit">mmHg</span></div>
           <p class="metric-caption" id="metric-bp-caption">No data yet</p>
-          <canvas id="spark-bp" class="spark" aria-hidden="true"></canvas>
+          <div class="spark-wrap"><canvas id="spark-bp" class="spark" aria-hidden="true"></canvas></div>
         </article>
 
         <article class="metric" data-nav-tab="weight" tabindex="0" role="button" aria-label="Go to weight detail">
@@ -145,7 +145,7 @@
           </div>
           <div class="metric-value" id="metric-weight-value">—<span class="unit">kg</span></div>
           <p class="metric-caption" id="metric-weight-caption">No data yet</p>
-          <canvas id="spark-weight" class="spark" aria-hidden="true"></canvas>
+          <div class="spark-wrap"><canvas id="spark-weight" class="spark" aria-hidden="true"></canvas></div>
         </article>
 
         <article class="metric" data-nav-tab="steps" tabindex="0" role="button" aria-label="Go to steps detail">
@@ -157,7 +157,7 @@
           </div>
           <div class="metric-value" id="metric-steps-value">—<span class="unit">today</span></div>
           <p class="metric-caption" id="metric-steps-caption">No data yet</p>
-          <canvas id="spark-steps" class="spark" aria-hidden="true"></canvas>
+          <div class="spark-wrap"><canvas id="spark-steps" class="spark" aria-hidden="true"></canvas></div>
         </article>
       </section>
 
@@ -194,7 +194,7 @@
                 <span class="legend-val" id="bp-legend-pulse">—</span>
               </div>
             </div>
-            <canvas id="bp-chart"></canvas>
+            <div class="chart-canvas-wrap"><canvas id="bp-chart"></canvas></div>
           </div>
           <div class="stat-col">
             <div class="stat">
@@ -263,7 +263,7 @@
                 Goal<span class="legend-val" id="weight-legend-goal">—</span>
               </div>
             </div>
-            <canvas id="weight-chart"></canvas>
+            <div class="chart-canvas-wrap"><canvas id="weight-chart"></canvas></div>
           </div>
           <div class="stat-col">
             <div class="stat">
@@ -335,8 +335,8 @@
                 <span class="legend-val" id="steps-legend-avg">—</span>
               </div>
             </div>
-            <canvas id="steps-chart"></canvas>
-            <canvas id="distance-chart" style="margin-top:1rem"></canvas>
+            <div class="chart-canvas-wrap"><canvas id="steps-chart"></canvas></div>
+            <div class="chart-canvas-wrap chart-canvas-wrap--sm" style="margin-top:1rem"><canvas id="distance-chart"></canvas></div>
           </div>
           <div class="stat-col">
             <div class="stat">
