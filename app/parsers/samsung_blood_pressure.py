@@ -32,10 +32,14 @@ def parse(f, filename: str, db: Session, user_id: int, import_batch_id: int | No
     from app.logging_config import get_import_logger
     get_import_logger().debug("  columns: %s", list(df.columns))
 
-    df["_systolic"]    = pd.to_numeric(df["systolic"],        errors="coerce")
-    df["_diastolic"]   = pd.to_numeric(df["diastolic"],        errors="coerce")
-    df["_pulse"]       = pd.to_numeric(df["pulse"], errors="coerce")
-    df["_measured_at"] = df["update_time"]
+    df["_systolic"]    = pd.to_numeric(df["systolic"],  errors="coerce")
+    df["_diastolic"]   = pd.to_numeric(df["diastolic"], errors="coerce")
+    df["_pulse"]       = pd.to_numeric(df["pulse"],     errors="coerce")
+    # start_time is the stable measurement timestamp; update_time changes on every
+    # Omron/device re-sync and causes all historical records to be re-imported as
+    # duplicates.  Fall back to update_time only for older export formats that lack
+    # start_time.
+    df["_measured_at"] = df["start_time"] if "start_time" in df.columns else df["update_time"]
 
     # Keep only rows that have all required fields
     df = df.dropna(subset=["_systolic", "_diastolic", "_measured_at"]).copy()
